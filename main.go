@@ -70,10 +70,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		defer resp.Body.Close()
 
 		var respBody StoicResponse
-		decodeErr := json.NewDecoder(resp.Body).Decode(&respBody)
+		err = json.NewDecoder(resp.Body).Decode(&respBody)
 
-		if decodeErr != nil {
-			fmt.Println("error decoding stoicquotesapi response", decodeErr)
+		if err != nil {
+			fmt.Println("error decoding stoicquotesapi response", err)
 			return
 		}
 
