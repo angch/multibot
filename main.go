@@ -78,6 +78,5 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		message := respBody.body + " — " + respBody.author
 		s.ChannelMessageSend(m.ChannelID, message)
-		return
 	}
 }
