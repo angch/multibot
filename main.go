@@ -1,11 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -36,6 +37,13 @@ func main() {
 	dg.Close()
 }
 
+type StoicResponse struct {
+	id string
+	body string
+	author_id int
+	author string
+}
+
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
@@ -46,5 +54,30 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if m.Content == "o/" {
 		s.ChannelMessageSend(m.ChannelID, "\\o")
+	}
+
+	if m.Content == "!stoic" {
+		url := "https://stoicquotesapi.com/v1/api/quotes/random"
+
+		resp, err := http.Get(url)
+
+		if err != nil {
+			fmt.Println("error retrieving stoicquotesapi", err)
+			return
+		}
+
+		defer resp.Body.Close()
+
+		var respBody StoicResponse
+		decodeErr := json.NewDecoder(resp.Body).Decode(&respBody);
+
+		if decodeErr != nil {
+			fmt.Println("error decoding stoicquotesapi response", decodeErr)
+			return
+		}
+
+		message := respBody.body + " — " + respBody.author
+		s.ChannelMessageSend(m.ChannelID, message)
+		return
 	}
 }
