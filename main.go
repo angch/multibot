@@ -38,10 +38,10 @@ func main() {
 }
 
 type StoicResponse struct {
-	id string
-	body string
-	author_id int
-	author string
+	id			string
+	body		string
+	author_id	int
+	author		string
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
