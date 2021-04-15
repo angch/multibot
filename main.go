@@ -39,7 +39,7 @@ func main() {
 }
 
 type StoicResponse struct {
-	id			string
+	id		string
 	body		string
 	author_id	int
 	author		string
@@ -70,7 +70,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		defer resp.Body.Close()
 
 		var respBody StoicResponse
-		decodeErr := json.NewDecoder(resp.Body).Decode(&respBody);
+		decodeErr := json.NewDecoder(resp.Body).Decode(&respBody)
 
 		if decodeErr != nil {
 			fmt.Println("error decoding stoicquotesapi response", decodeErr)
