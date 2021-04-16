@@ -39,10 +39,10 @@ func main() {
 }
 
 type StoicResponse struct {
-	id		string
-	body		string
-	author_id	int
-	author		string
+	Id		string	`json:"id"`
+	Body		string	`json:"body"`
+	Author_id	int	`json:"author_id"`
+	Author		string	`json:"author"`
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -77,7 +77,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-		message := respBody.body + " — " + respBody.author
+		message := respBody.Body + " — " + respBody.Author
 		s.ChannelMessageSend(m.ChannelID, message)
 	}
 }
