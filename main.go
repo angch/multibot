@@ -15,7 +15,10 @@ limitations under the License.
 */
 package main
 
-import "github.com/angch/discordbot/cmd"
+import (
+	"github.com/angch/discordbot/cmd"
+	_ "github.com/angch/discordbot/pkg/stoic"
+)
 
 func main() {
 	cmd.Execute()
