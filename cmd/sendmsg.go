@@ -17,22 +17,45 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"strings"
 
+	"github.com/angch/discordbot/pkg/engineersmy"
+	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/cobra"
 )
 
 // sendmsgCmd represents the sendmsg command
 var sendmsgCmd = &cobra.Command{
 	Use:   "sendmsg",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Send a message to channel as bot, outside of the event loop",
+	Long:  `Send a message to channel as bot, outside of the event loop`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("sendmsg called")
+		token := os.Getenv("TOKEN")
+		dg, err := discordgo.New("Bot " + token)
+		if err != nil {
+			fmt.Println("error creating Discord session,", err)
+			return
+		}
+
+		if len(args) < 2 {
+			log.Println("Not enough params")
+			return
+		}
+		channel := args[0]
+		mesg := strings.Join(args[1:], " ")
+
+		channelId, ok := engineersmy.KnownChannels[channel]
+		if !ok {
+			log.Println("Unknown channel", channel)
+			return
+		}
+
+		_, err = dg.ChannelMessageSend(channelId, mesg)
+		if err != nil {
+			log.Println(err)
+		}
 	},
 }
 
