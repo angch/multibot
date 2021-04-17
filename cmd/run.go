@@ -16,30 +16,16 @@ limitations under the License.
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/angch/discordbot/pkg/bothandler"
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/cobra"
 )
-
-// Temporarily here
-type StoicResponse struct {
-	Id       int    `json:"id"` // cannot unmarshal number into Go struct field StoicResponse.id of type string
-	Body     string `json:"body"`
-	AuthorId int    `json:"author_id"`
-	Author   string `json:"author"`
-}
-
-/*
-{"id":21,"body":"The soul becomes dyed with the color of its thoughts.","author_id":1,"author":"Marcus Aurelius"}
-*/
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
@@ -59,34 +45,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 
-	if m.Content == "!stoic" {
-		url := "https://stoicquotesapi.com/v1/api/quotes/random"
-
-		resp, err := http.Get(url)
-
-		if err != nil {
-			fmt.Println("error retrieving stoicquotesapi", err)
-			return
-		}
-
-		defer resp.Body.Close()
-
-		var respBody StoicResponse
-
-		// This is when you don't want a stream, so you have a copy you can debug
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Println(err)
-		}
-
-		err = json.Unmarshal(body, &respBody)
-		if err != nil {
-			log.Println("error decoding stoicquotesapi response", err, string(body))
-			return
-		}
-
-		message := respBody.Body + " — " + respBody.Author
-		_, err = s.ChannelMessageSend(m.ChannelID, message)
+	// FIXME: This can be better
+	// Part of first stage refac
+	h, ok := bothandler.Handlers[m.Content]
+	if ok {
+		response := h()
+		_, err := s.ChannelMessageSend(m.ChannelID, response)
 		if err != nil {
 			log.Println(err)
 		}
