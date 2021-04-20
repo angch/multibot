@@ -21,8 +21,11 @@ type fragment struct {
 	From, To string
 }
 
+// FIXME/TODO: spin off a module to use sentiment analysis to respond to messages with
+// choice emojis
 var fragments = []fragment{
 	{"(╯°□°）╯︵ ┻━┻", "┬─┬ノ( º _ ºノ) "},
+	{"O.O", "(^_^)"},
 }
 
 func UwuHandler(input string) string {
