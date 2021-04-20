@@ -31,19 +31,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-	if m.Content == "hello" {
-		_, err := s.ChannelMessageSend(m.ChannelID, "World!")
-		if err != nil {
-			log.Println(err)
-		}
-	}
-
-	if m.Content == "o/" {
-		_, err := s.ChannelMessageSend(m.ChannelID, "\\o")
-		if err != nil {
-			log.Println(err)
-		}
-	}
 
 	// FIXME: This can be better
 	// Part of first stage refac
@@ -53,6 +40,17 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		_, err := s.ChannelMessageSend(m.ChannelID, response)
 		if err != nil {
 			log.Println(err)
+		}
+	}
+
+	// Can be better to decouple 1 to 1 of message : response
+	for _, v := range bothandler.CatchallHandlers {
+		r := v(m.Content)
+		if r != "" {
+			_, err := s.ChannelMessageSend(m.ChannelID, r)
+			if err != nil {
+				log.Println(err)
+			}
 		}
 	}
 }
