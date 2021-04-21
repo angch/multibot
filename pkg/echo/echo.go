@@ -1,9 +1,6 @@
 package echo
 
-// #cgo LDFLAGS: -L../../lib -luwu
-// #include "../../lib/uwu.h"
-import "C"
-
+// (ꈍᴗꈍ)
 import (
 	"strings"
 
@@ -14,10 +11,38 @@ func init() {
 	bothandler.RegisterCatchallHandler(UwuHandler)
 }
 
+var echos = map[string]string{
+	"hello": "World!",
+	"o/":    "\\o",
+	"\\o":   "o/",
+}
+
+type fragment struct {
+	From, To string
+}
+
+// FIXME/TODO: spin off a module to use sentiment analysis to respond to messages with
+// choice emojis
+var fragments = []fragment{
+	{"(╯°□°）╯︵ ┻━┻", "┬─┬ノ( º _ ºノ) "},
+	{"O.O", "(^_^)"},
+}
+
 func UwuHandler(input string) string {
-	if strings.Contains(strings.ToLower(input), "uwu") {
-		return C.GoString(C.uwuify(C.CString(input)))
+	i := strings.ToLower(input)
+	if strings.Contains(i, "uwu") || strings.Contains(input, "(ꈍᴗꈍ)") {
+		return "(ꈍᴗꈍ)"
 	}
 
+	r, ok := echos[i]
+	if ok {
+		return r
+	}
+
+	for _, v := range fragments {
+		if strings.Contains(i, v.From) {
+			return v.To
+		}
+	}
 	return ""
 }
