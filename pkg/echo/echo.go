@@ -9,6 +9,13 @@ import (
 
 func init() {
 	bothandler.RegisterCatchallHandler(UwuHandler)
+
+	for k, v := range fragments {
+		vl := strings.ToLower(v.From)
+		if vl != v.From {
+			fragments[k].From = vl
+		}
+	}
 }
 
 var echos = map[string]string{
