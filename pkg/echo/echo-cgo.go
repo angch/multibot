@@ -14,7 +14,7 @@ import (
 func EchoHandler(input string) string {
 	i := strings.ToLower(input)
 	if strings.Contains(i, "uwu") || strings.Contains(input, "(ꈍᴗꈍ)") {
-		return C.GoString(C.uwuify(C.CString(input)))
+		return strings.Replace(C.GoString(C.uwuify(C.CString(input))), "uwu", "(ꈍᴗꈍ)", 1)
 	}
 
 	r, ok := echos[i]
