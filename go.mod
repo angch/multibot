@@ -3,6 +3,7 @@ module github.com/angch/discordbot
 go 1.16
 
 require (
+	github.com/PuerkitoBio/goquery v1.6.1
 	github.com/bwmarrin/discordgo v0.23.2
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cobra v1.1.3

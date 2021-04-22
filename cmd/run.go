@@ -77,7 +77,18 @@ var runCmd = &cobra.Command{
 			return
 		}
 
-		fmt.Println("Bot is now running.  Press CTRL-C to exit.")
+		fmt.Println("Discord Bot is now running.  Press CTRL-C to exit.")
+
+		n := bothandler.NewMessagePlatformFromDiscord(dg)
+		bothandler.RegisterMessagePlatform(n)
+
+		slackUrl := os.Getenv("SLACKWEBHOOK")
+		if slackUrl != "" {
+			log.Println("Registering slack")
+			s := bothandler.NewMessagePlatformFromSlack(slackUrl)
+			bothandler.RegisterMessagePlatform(s)
+		}
+
 		sc := make(chan os.Signal, 1)
 		signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 		<-sc
