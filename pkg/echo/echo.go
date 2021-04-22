@@ -1,5 +1,9 @@
 package echo
 
+// #cgo LDFLAGS: -L../../lib -luwu
+// #include "../../lib/uwu.h"
+import "C"
+
 // (ꈍᴗꈍ)
 import (
 	"strings"
@@ -8,7 +12,7 @@ import (
 )
 
 func init() {
-	bothandler.RegisterCatchallHandler(UwuHandler)
+	bothandler.RegisterCatchallHandler(EchoHandler)
 
 	for k, v := range fragments {
 		vl := strings.ToLower(v.From)
@@ -35,10 +39,10 @@ var fragments = []fragment{
 	{"O.O", "(^_^)"},
 }
 
-func UwuHandler(input string) string {
+func EchoHandler(input string) string {
 	i := strings.ToLower(input)
 	if strings.Contains(i, "uwu") || strings.Contains(input, "(ꈍᴗꈍ)") {
-		return "(ꈍᴗꈍ)"
+		return C.GoString(C.uwuify(C.CString(input)))
 	}
 
 	r, ok := echos[i]
