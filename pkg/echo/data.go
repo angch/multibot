@@ -1,10 +1,5 @@
 package echo
 
-// #cgo LDFLAGS: -L../../lib -luwu
-// #include "../../lib/uwu.h"
-import "C"
-
-// (ꈍᴗꈍ)
 import (
 	"strings"
 
@@ -37,23 +32,4 @@ type fragment struct {
 var fragments = []fragment{
 	{"(╯°□°）╯︵ ┻━┻", "┬─┬ノ( º _ ºノ) "},
 	{"O.O", "(^_^)"},
-}
-
-func EchoHandler(input string) string {
-	i := strings.ToLower(input)
-	if strings.Contains(i, "uwu") || strings.Contains(input, "(ꈍᴗꈍ)") {
-		return C.GoString(C.uwuify(C.CString(input)))
-	}
-
-	r, ok := echos[i]
-	if ok {
-		return r
-	}
-
-	for _, v := range fragments {
-		if strings.Contains(i, v.From) {
-			return v.To
-		}
-	}
-	return ""
 }
