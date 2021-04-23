@@ -89,3 +89,14 @@ func (s *SlackMessagePlatform) Send(text string) {
 		log.Println(err)
 	}
 }
+
+type DevMessagePlatform struct {
+}
+
+func NewMessagePlatformFromDev() *DevMessagePlatform {
+	return &DevMessagePlatform{}
+}
+
+func (s *DevMessagePlatform) Send(text string) {
+	log.Println(text)
+}
