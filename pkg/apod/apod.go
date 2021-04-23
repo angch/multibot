@@ -93,6 +93,25 @@ func doYMD(y, m, d int) *ApodPost {
 	doc.Find("title").Each(func(i int, s *goquery.Selection) {
 		title = strings.TrimSpace(s.Text())
 	})
+
+	if imgUrl == "" {
+		// Is it a video?
+		doc.Find("iframe").Each(func(i int, s *goquery.Selection) {
+			img := s.AttrOr("src", "")
+			lowerImg := strings.ToLower(img)
+			if strings.HasPrefix(lowerImg, "https://www.youtube.com") {
+				imgUrl = img
+
+				if strings.Contains(lowerImg, "/embed/") {
+					// FIXME: Lazy.
+					// https://www.youtube.com/embed/zIqG42AD4Gw?rel=0
+					// to
+					// https://www.youtube.com/watch?v=zIqG42AD4Gw
+				}
+			}
+		})
+	}
+
 	if title != "" && imgUrl != "" {
 		post := ApodPost{
 			Text:     title,
@@ -100,7 +119,7 @@ func doYMD(y, m, d int) *ApodPost {
 		}
 		return &post
 	} else {
-		log.Println("No title", title, "or url", imgUrl)
+		log.Println("No title", title, "or url", imgUrl, "in", url)
 	}
 	return nil
 }
