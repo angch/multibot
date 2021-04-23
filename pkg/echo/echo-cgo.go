@@ -1,8 +1,8 @@
-package echo
-
 // +build cgo
 
-// #cgo LDFLAGS: -L../../lib -luwu
+package echo
+
+// #cgo LDFLAGS: -L../../lib/uwu/target/release -luwu
 // #include "../../lib/uwu.h"
 import "C"
 

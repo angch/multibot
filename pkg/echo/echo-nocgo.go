@@ -1,6 +1,6 @@
-package echo
+// +build !cgo
 
-// +build -cgo
+package echo
 
 // (ꈍᴗꈍ)
 import (
