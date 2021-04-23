@@ -58,6 +58,7 @@ var testbotCmd = &cobra.Command{
 		}
 		defer l.Close()
 
+	outer:
 		for {
 			line, err := l.Readline()
 			if err == readline.ErrInterrupt {
@@ -87,7 +88,7 @@ var testbotCmd = &cobra.Command{
 
 			switch {
 			case line == "bye", line == "quit":
-				break
+				break outer
 			}
 		}
 	},
