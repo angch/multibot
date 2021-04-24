@@ -137,7 +137,8 @@ func Apod() {
 		_, exists := posts[key]
 		if exists {
 			log.Println("Done for today")
-			time.Sleep(20 * time.Hour)
+			time.Sleep(1 * time.Hour)
+			continue
 		}
 
 		log.Printf("Doing %d %d %d\n", y, m, d)
