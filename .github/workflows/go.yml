@@ -13,13 +13,28 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Install stable toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+
+    - name: Cargo build
+      working-directory: lib/uwu
+      run: cargo build --release
+        
+    - name: Copy rust library
+      working-directory: lib/uwu
+      run: cp target/release/libuwu.so ../
+
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
         go-version: 1.15
 
     - name: Build
-      run: go build -v ./...
+      run: go build -ldflags="-r lib" -v ./...
 
     - name: Test
-      run: go test -v ./...
+      run: go test -ldflags="-r lib" -v ./...
