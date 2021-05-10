@@ -72,13 +72,19 @@ func doYMD(y, m, d int) *ApodPost {
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Println(err)
+		return nil
 	}
 	if resp.StatusCode != 200 {
 		log.Println("Not ready yet ", resp.Status)
 	}
+	if resp.Body == nil {
+		log.Println("Body is empty")
+		return nil
+	}
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		log.Println(err)
+		return nil
 	}
 	resp.Body.Close()
 	imgUrl := ""
