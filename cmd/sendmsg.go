@@ -21,8 +21,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/angch/discordbot/pkg/engineersmy"
-	"github.com/bwmarrin/discordgo"
+	"github.com/angch/discordbot/pkg/bothandler"
 	"github.com/spf13/cobra"
 )
 
@@ -32,13 +31,6 @@ var sendmsgCmd = &cobra.Command{
 	Short: "Send a message to channel as bot, outside of the event loop",
 	Long:  `Send a message to channel as bot, outside of the event loop`,
 	Run: func(cmd *cobra.Command, args []string) {
-		token := os.Getenv("TOKEN")
-		dg, err := discordgo.New("Bot " + token)
-		if err != nil {
-			fmt.Println("error creating Discord session,", err)
-			return
-		}
-
 		if len(args) < 2 {
 			log.Println("Not enough params")
 			return
@@ -46,13 +38,35 @@ var sendmsgCmd = &cobra.Command{
 		channel := args[0]
 		mesg := strings.Join(args[1:], " ")
 
-		channelId, ok := engineersmy.KnownChannels[channel]
-		if !ok {
-			log.Println("Unknown channel", channel)
-			return
+		discordtoken := os.Getenv("DISCORDTOKEN")
+		if discordtoken != "" {
+			n, err := bothandler.NewMessagePlatformFromDiscord(discordtoken)
+			if err != nil {
+				log.Fatal(err)
+			}
+			bothandler.RegisterPassiveMessagePlatform(n)
 		}
 
-		_, err = dg.ChannelMessageSend(channelId, mesg)
+		slackAppToken := os.Getenv("SLACK_APP_TOKEN")
+		slackBotToken := os.Getenv("SLACK_BOT_TOKEN")
+		if slackAppToken != "" && slackBotToken != "" {
+			if !strings.HasPrefix(slackAppToken, "xapp-") {
+				fmt.Fprintf(os.Stderr, "SLACK_APP_TOKEN must have the prefix \"xapp-\".")
+			}
+			if !strings.HasPrefix(slackBotToken, "xoxb-") {
+				fmt.Fprintf(os.Stderr, "SLACK_BOT_TOKEN must have the prefix \"xoxb-\".")
+			}
+
+			s, err := bothandler.NewMessagePlatformFromSlack(slackBotToken, slackAppToken)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Println("Slack bot is now running.")
+			bothandler.RegisterPassiveMessagePlatform(s)
+			go s.ProcessMessages()
+		}
+
+		err := bothandler.ChannelMessageSend(channel, mesg)
 		if err != nil {
 			log.Println(err)
 		}
