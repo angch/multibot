@@ -1,15 +1,5 @@
 package bothandler
 
-import (
-	"bytes"
-	"fmt"
-	"log"
-	"net/http"
-
-	"github.com/angch/discordbot/pkg/engineersmy"
-	"github.com/bwmarrin/discordgo"
-)
-
 // We could use discordbot's handler system, but we have own wrappers here to make
 // multiplatform bots work.
 
@@ -46,57 +36,6 @@ func RegisterPlatformRegisteration(h AddMessagePlatform) {
 
 func RegisterMessagePlatform(m MessagePlatform) {
 	for _, v := range AddMessagePlatforms {
-		// log.Printf("Registering %+v\n", m)
 		v(m)
 	}
-}
-
-// Implements MessagePlatform
-type DiscordMessagePlatform struct {
-	Session  *discordgo.Session
-	Channels map[string]string
-}
-
-func NewMessagePlatformFromDiscord(dg *discordgo.Session) *DiscordMessagePlatform {
-	return &DiscordMessagePlatform{
-		Session:  dg,
-		Channels: engineersmy.KnownChannels,
-	}
-}
-
-// Send to default channel
-func (dg *DiscordMessagePlatform) Send(m string) {
-	_, err := dg.Session.ChannelMessageSend(dg.Channels[""], m)
-	if err != nil {
-		log.Println(err)
-	}
-}
-
-type SlackMessagePlatform struct {
-	SlackWebHook string
-}
-
-func NewMessagePlatformFromSlack(slackwebhook string) *SlackMessagePlatform {
-	return &SlackMessagePlatform{
-		SlackWebHook: slackwebhook,
-	}
-}
-
-func (s *SlackMessagePlatform) Send(text string) {
-	content := bytes.NewBuffer([]byte(fmt.Sprintf("{\"text\":\"%s\"}", text)))
-	_, err := http.Post(s.SlackWebHook, "Content-type: application/json", content)
-	if err != nil {
-		log.Println(err)
-	}
-}
-
-type DevMessagePlatform struct {
-}
-
-func NewMessagePlatformFromDev() *DevMessagePlatform {
-	return &DevMessagePlatform{}
-}
-
-func (s *DevMessagePlatform) Send(text string) {
-	log.Println(text)
 }
