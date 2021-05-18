@@ -31,39 +31,42 @@ var sendmsgCmd = &cobra.Command{
 	Short: "Send a message to channel as bot, outside of the event loop",
 	Long:  `Send a message to channel as bot, outside of the event loop`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 2 {
+		if len(args) < 3 {
 			log.Println("Not enough params")
 			return
 		}
-		channel := args[0]
-		mesg := strings.Join(args[1:], " ")
+		platform := args[0]
+		channel := args[1]
+		mesg := strings.Join(args[2:], " ")
 
-		discordtoken := os.Getenv("DISCORDTOKEN")
-		if discordtoken != "" {
-			n, err := bothandler.NewMessagePlatformFromDiscord(discordtoken)
-			if err != nil {
-				log.Fatal(err)
+		if platform == "discord" || platform == "all" {
+			discordtoken := os.Getenv("DISCORDTOKEN")
+			if discordtoken != "" {
+				n, err := bothandler.NewMessagePlatformFromDiscord(discordtoken)
+				if err != nil {
+					log.Fatal(err)
+				}
+				bothandler.RegisterPassiveMessagePlatform(n)
 			}
-			bothandler.RegisterPassiveMessagePlatform(n)
 		}
 
-		slackAppToken := os.Getenv("SLACK_APP_TOKEN")
-		slackBotToken := os.Getenv("SLACK_BOT_TOKEN")
-		if slackAppToken != "" && slackBotToken != "" {
-			if !strings.HasPrefix(slackAppToken, "xapp-") {
-				fmt.Fprintf(os.Stderr, "SLACK_APP_TOKEN must have the prefix \"xapp-\".")
-			}
-			if !strings.HasPrefix(slackBotToken, "xoxb-") {
-				fmt.Fprintf(os.Stderr, "SLACK_BOT_TOKEN must have the prefix \"xoxb-\".")
-			}
+		if platform == "slack" || platform == "all" {
+			slackAppToken := os.Getenv("SLACK_APP_TOKEN")
+			slackBotToken := os.Getenv("SLACK_BOT_TOKEN")
+			if slackAppToken != "" && slackBotToken != "" {
+				if !strings.HasPrefix(slackAppToken, "xapp-") {
+					fmt.Fprintf(os.Stderr, "SLACK_APP_TOKEN must have the prefix \"xapp-\".")
+				}
+				if !strings.HasPrefix(slackBotToken, "xoxb-") {
+					fmt.Fprintf(os.Stderr, "SLACK_BOT_TOKEN must have the prefix \"xoxb-\".")
+				}
 
-			s, err := bothandler.NewMessagePlatformFromSlack(slackBotToken, slackAppToken)
-			if err != nil {
-				log.Fatal(err)
+				s, err := bothandler.NewMessagePlatformFromSlack(slackBotToken, slackAppToken)
+				if err != nil {
+					log.Fatal(err)
+				}
+				bothandler.RegisterPassiveMessagePlatform(s)
 			}
-			log.Println("Slack bot is now running.")
-			bothandler.RegisterPassiveMessagePlatform(s)
-			go s.ProcessMessages()
 		}
 
 		err := bothandler.ChannelMessageSend(channel, mesg)
