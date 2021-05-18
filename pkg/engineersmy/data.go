@@ -7,3 +7,9 @@ var KnownChannels = map[string]string{
 	"general":  "811472319876562989",
 	"":         "811472319876562989",
 }
+
+var KnownTelegramChannels = map[string]int{
+	"offtopic": -1001430213215,
+	"general":  -1001430213215,
+	"":         -1001430213215,
+}
