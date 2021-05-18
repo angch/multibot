@@ -71,6 +71,17 @@ var runCmd = &cobra.Command{
 			go s.ProcessMessages()
 		}
 
+		telegramBotToken := os.Getenv("TELEGRAM_BOT_TOKEN")
+		if telegramBotToken != "" {
+			s, err := bothandler.NewMessagePlatformFromTelegram(telegramBotToken)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Println("Telegram bot is now running.")
+			bothandler.RegisterMessagePlatform(s)
+			go s.ProcessMessages()
+		}
+
 		sc := make(chan os.Signal, 1)
 		signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 		<-sc

@@ -69,6 +69,19 @@ var sendmsgCmd = &cobra.Command{
 			}
 		}
 
+		if platform == "telegram" || platform == "all" {
+			telegramBotToken := os.Getenv("TELEGRAM_BOT_TOKEN")
+			if telegramBotToken != "" {
+				s, err := bothandler.NewMessagePlatformFromTelegram(telegramBotToken)
+				if err != nil {
+					log.Fatal(err)
+				}
+				log.Println("Telegram bot is now running.")
+				bothandler.RegisterMessagePlatform(s)
+				go s.ProcessMessages()
+			}
+		}
+
 		err := bothandler.ChannelMessageSend(channel, mesg)
 		if err != nil {
 			log.Println(err)
