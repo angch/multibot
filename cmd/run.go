@@ -66,6 +66,7 @@ var runCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
+			s.DefaultChannel = "#random"
 			log.Println("Slack bot is now running.")
 			bothandler.RegisterMessagePlatform(s)
 			go s.ProcessMessages()
@@ -77,6 +78,7 @@ var runCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
+			s.DefaultChannel = "offtopic"
 			log.Println("Telegram bot is now running.")
 			bothandler.RegisterMessagePlatform(s)
 			go s.ProcessMessages()

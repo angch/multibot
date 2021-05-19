@@ -18,6 +18,7 @@ type SlackMessagePlatform struct {
 	SocketModeClient *socketmode.Client
 	ChannelId        map[string]string
 	AuthResponse     *slack.AuthTestResponse
+	DefaultChannel   string
 }
 
 func NewMessagePlatformFromSlack(slackbottoken, slackapptoken string) (*SlackMessagePlatform, error) {
@@ -215,13 +216,19 @@ func (s *SlackMessagePlatform) Send(text string) {
 	if s == nil || s.SocketModeClient == nil {
 		return
 	}
-	// s.Rtm.SendMessage(s.Rtm.NewOutgoingMessage(text, "#random"))
+	err := s.ChannelMessageSend("", text)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func (s *SlackMessagePlatform) Close() {
 }
 
 func (s *SlackMessagePlatform) ChannelMessageSend(channel, message string) error {
+	if channel == "" {
+		channel = s.DefaultChannel
+	}
 	channelId, ok := s.ChannelId[channel]
 	if !ok {
 		log.Println("Unknown channel", channel)
