@@ -45,7 +45,7 @@ func AskFazHandler(input string) string {
 		}
 	}
 
-	if count > 3 && uncount == 0 {
+	if count >= 3 && uncount == 0 {
 		return "Good question, @tech_tarik, what do you think?"
 	}
 
