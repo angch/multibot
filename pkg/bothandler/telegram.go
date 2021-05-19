@@ -16,6 +16,7 @@ type TelegramMessagePlatform struct {
 	ChannelId      map[string]string
 	KnownUsers     map[string]tgbotapi.User
 	KnownUsersLock sync.RWMutex
+	DefaultChannel string
 }
 
 func NewMessagePlatformFromTelegram(telegrambottoken string) (*TelegramMessagePlatform, error) {
@@ -82,13 +83,22 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 }
 
 func (s *TelegramMessagePlatform) Send(text string) {
-	// FIXME
+	if s == nil {
+		return
+	}
+	err := s.ChannelMessageSend("", text)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func (s *TelegramMessagePlatform) Close() {
 }
 
 func (s *TelegramMessagePlatform) ChannelMessageSend(channel, message string) error {
+	if channel == "" {
+		channel = s.DefaultChannel
+	}
 	channelId, ok := engineersmy.KnownTelegramChannels[channel]
 	if !ok {
 		log.Println("Unknown channel", channel)
