@@ -15,6 +15,8 @@ var triggers = []string{
 	"best practice",
 	"aws",
 	"amazon",
+	"credits",
+	"serverless",
 }
 
 var untriggers = []string{
