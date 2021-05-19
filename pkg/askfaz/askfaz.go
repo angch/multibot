@@ -17,6 +17,11 @@ var triggers = []string{
 	"amazon",
 }
 
+var untriggers = []string{
+	"faz",
+	"tech_tarik",
+}
+
 func init() {
 	bothandler.RegisterCatchallHandler(AskFazHandler)
 }
@@ -30,7 +35,15 @@ func AskFazHandler(input string) string {
 			count++
 		}
 	}
-	if count > 3 {
+
+	uncount := 0
+	for _, v := range untriggers {
+		if strings.Contains(i, v) {
+			uncount++
+		}
+	}
+
+	if count > 3 && uncount == 0 {
 		return "Good question, @tech_tarik, what do you think?"
 	}
 
