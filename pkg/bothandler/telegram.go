@@ -10,7 +10,6 @@ import (
 )
 
 // Implements MessagePlatform
-// New way, using Slack Rtm
 type TelegramMessagePlatform struct {
 	Client         *tgbotapi.BotAPI
 	ChannelId      map[string]string
@@ -41,12 +40,12 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 		log.Fatal(err)
 	}
 	for update := range updates {
-		log.Printf("%+v\n", update)
+		// log.Printf("%+v\n", update)
 		if update.Message == nil { // ignore any non-Message Updates
 			continue
 		}
 
-		log.Printf("[%s] %s %d %d", update.Message.From.UserName, update.Message.Text, update.Message.From.ID, update.Message.Chat.ID)
+		// log.Printf("[%s] %s %d %d", update.Message.From.UserName, update.Message.Text, update.Message.From.ID, update.Message.Chat.ID)
 		s.KnownUsersLock.Lock()
 		s.KnownUsers[update.Message.From.UserName] = *update.Message.From
 		s.KnownUsersLock.Unlock()

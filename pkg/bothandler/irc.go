@@ -39,7 +39,7 @@ func NewMessagePlatformFromIrc(serveraddr string, clientconfig *irc.ClientConfig
 
 func (s *IrcMessagePlatform) ProcessMessages() {
 	s.ClientConfig.Handler = irc.HandlerFunc(func(c *irc.Client, m *irc.Message) {
-		log.Printf("irchandler %+v\n", *m)
+		// log.Printf("irchandler %+v\n", *m)
 		if m.Command == "001" {
 			// 001 is a welcome event, so we join channels there
 			err := c.Write("JOIN #" + s.DefaultChannel)
@@ -47,7 +47,7 @@ func (s *IrcMessagePlatform) ProcessMessages() {
 				log.Println(err)
 			}
 		} else if m.Command == "PRIVMSG" {
-			log.Printf("params are: %v\n", m.Params)
+			// log.Printf("params are: %v\n", m.Params)
 			if len(m.Params) > 1 {
 				channel := m.Params[0]
 				content := strings.Join(m.Params[1:], " ")
