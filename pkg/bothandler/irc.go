@@ -16,6 +16,7 @@ type IrcMessagePlatform struct {
 	ClientConfig   *irc.ClientConfig
 	Client         *irc.Client
 	DefaultChannel string
+	CloseMe        bool
 }
 
 func NewMessagePlatformFromIrc(serveraddr string, clientconfig *irc.ClientConfig, signal chan os.Signal) (*IrcMessagePlatform, error) {
@@ -88,15 +89,25 @@ func (s *IrcMessagePlatform) ProcessMessages() {
 	})
 	// Create the client
 	client := irc.NewClient(s.Conn, *s.ClientConfig)
-	err := client.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
 	s.Client = client
+
+	for {
+		err := client.Run()
+		if err != nil {
+			log.Println(err)
+			if s.CloseMe {
+				break
+			}
+			if err.Error() == "EOF" {
+				continue
+			}
+		}
+	}
 }
 
 func (s *IrcMessagePlatform) Close() {
 	if s != nil && s.Conn != nil {
+		s.CloseMe = true
 		s.Conn.Close()
 	}
 }
