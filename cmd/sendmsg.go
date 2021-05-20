@@ -18,11 +18,13 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"strings"
 
 	"github.com/angch/discordbot/pkg/bothandler"
 	"github.com/spf13/cobra"
+	"gopkg.in/irc.v3"
 )
 
 // sendmsgCmd represents the sendmsg command
@@ -38,6 +40,7 @@ var sendmsgCmd = &cobra.Command{
 		platform := args[0]
 		channel := args[1]
 		mesg := strings.Join(args[2:], " ")
+		sc := make(chan os.Signal, 1)
 
 		if platform == "discord" || platform == "all" {
 			discordtoken := os.Getenv("DISCORDTOKEN")
@@ -81,6 +84,32 @@ var sendmsgCmd = &cobra.Command{
 				log.Println("Telegram bot is now running.")
 				bothandler.RegisterMessagePlatform(s)
 				go s.ProcessMessages()
+			}
+		}
+
+		if platform == "irc" || platform == "all" {
+			ircConn := os.Getenv("IRC_CONN")
+			if ircConn != "" {
+				ircParams, err := url.Parse(ircConn)
+				if err == nil {
+					password, _ := ircParams.User.Password()
+					username := ircParams.User.Username()
+					config := irc.ClientConfig{
+						User: username,
+						Nick: username,
+						Name: username,
+						Pass: password,
+					}
+					s, err := bothandler.NewMessagePlatformFromIrc(ircParams.Host, &config, sc)
+					if err != nil {
+						log.Fatal(err)
+					}
+					s.DefaultChannel = strings.TrimPrefix(ircParams.Path, "/")
+
+					log.Println("Irc bot is now running.")
+					bothandler.RegisterMessagePlatform(s)
+					go s.ProcessMessages()
+				}
 			}
 		}
 

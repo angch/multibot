@@ -18,6 +18,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"os/signal"
 	"strings"
@@ -25,6 +26,7 @@ import (
 
 	"github.com/angch/discordbot/pkg/bothandler"
 	"github.com/spf13/cobra"
+	"gopkg.in/irc.v3"
 )
 
 // runCmd represents the run command
@@ -33,6 +35,8 @@ var runCmd = &cobra.Command{
 	Short: "Run the discordbot",
 	Long:  `Run the discordbot`,
 	Run: func(cmd *cobra.Command, args []string) {
+		sc := make(chan os.Signal, 1)
+
 		discordtoken := os.Getenv("DISCORDTOKEN")
 		if discordtoken != "" {
 			n, err := bothandler.NewMessagePlatformFromDiscord(discordtoken)
@@ -84,7 +88,30 @@ var runCmd = &cobra.Command{
 			go s.ProcessMessages()
 		}
 
-		sc := make(chan os.Signal, 1)
+		ircConn := os.Getenv("IRC_CONN")
+		if ircConn != "" {
+			ircParams, err := url.Parse(ircConn)
+			if err == nil {
+				password, _ := ircParams.User.Password()
+				username := ircParams.User.Username()
+				config := irc.ClientConfig{
+					User: username,
+					Nick: username,
+					Name: username,
+					Pass: password,
+				}
+				s, err := bothandler.NewMessagePlatformFromIrc(ircParams.Host, &config, sc)
+				if err != nil {
+					log.Fatal(err)
+				}
+				s.DefaultChannel = strings.TrimPrefix(ircParams.Path, "/")
+
+				log.Println("Irc bot is now running.")
+				bothandler.RegisterMessagePlatform(s)
+				go s.ProcessMessages()
+			}
+		}
+
 		signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 		<-sc
 

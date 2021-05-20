@@ -14,4 +14,5 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.1
 	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
+	gopkg.in/irc.v3 v3.1.4
 )
