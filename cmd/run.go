@@ -48,14 +48,6 @@ var runCmd = &cobra.Command{
 			go n.ProcessMessages()
 		}
 
-		slackUrl := os.Getenv("SLACKWEBHOOK")
-		if slackUrl != "" {
-			s := bothandler.NewMessagePlatformFromSlackWebhook(slackUrl)
-			log.Println("Slack webhook is now running.")
-			bothandler.RegisterMessagePlatform(s)
-			go s.ProcessMessages()
-		}
-
 		slackAppToken := os.Getenv("SLACK_APP_TOKEN")
 		slackBotToken := os.Getenv("SLACK_BOT_TOKEN")
 		if slackAppToken != "" && slackBotToken != "" {

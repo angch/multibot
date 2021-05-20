@@ -12,7 +12,7 @@ import (
 )
 
 // Implements MessagePlatform
-// New way, using Slack Rtm
+// New way, using Slack Socket Mode
 type SlackMessagePlatform struct {
 	Client           *slack.Client
 	SocketModeClient *socketmode.Client
@@ -79,7 +79,7 @@ func (s *SlackMessagePlatform) ProcessMessages() {
 	go func() {
 	eventloop:
 		for evt := range client.Events {
-			log.Printf("Ping events %+v\n", evt)
+			// log.Printf("Ping events %+v\n", evt)
 			switch evt.Type {
 			case socketmode.EventTypeConnecting:
 				log.Println("Connecting to Slack with Socket Mode...")
@@ -95,7 +95,7 @@ func (s *SlackMessagePlatform) ProcessMessages() {
 					continue eventloop
 				}
 
-				log.Printf("Event received: %+v\n", eventsAPIEvent)
+				// log.Printf("Event received: %+v\n", eventsAPIEvent)
 
 				client.Ack(*evt.Request)
 
@@ -150,7 +150,7 @@ func (s *SlackMessagePlatform) ProcessMessages() {
 					continue
 				}
 
-				log.Printf("Interaction received: %+v\n", callback)
+				// log.Printf("Interaction received: %+v\n", callback)
 
 				var payload interface{}
 
@@ -175,7 +175,8 @@ func (s *SlackMessagePlatform) ProcessMessages() {
 					continue
 				}
 
-				client.Debugf("Slash command received: %+v", cmd)
+				// client.Debugf("Slash command received: %+v", cmd)
+				_ = cmd
 
 				payload := map[string]interface{}{
 					"blocks": []slack.Block{
