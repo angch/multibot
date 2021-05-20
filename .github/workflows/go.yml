@@ -12,6 +12,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    
+    - uses: actions/cache@v2
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          lib/uwu/target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install stable toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+
+    - name: Cargo build
+      working-directory: lib/uwu
+      run: cargo build --release
+        
+    - name: Copy rust library
+      working-directory: lib/uwu
+      run: cp target/release/libuwu.so ../
 
     - name: Set up Go
       uses: actions/setup-go@v2
@@ -19,7 +49,7 @@ jobs:
         go-version: 1.15
 
     - name: Build
-      run: go build -v ./...
+      run: go build -ldflags="-r lib" -v ./...
 
     - name: Test
-      run: go test -v ./...
+      run: go test -ldflags="-r lib" -v ./...

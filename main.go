@@ -17,6 +17,8 @@ package main
 
 import (
 	"github.com/angch/discordbot/cmd"
+	_ "github.com/angch/discordbot/pkg/apod"
+	_ "github.com/angch/discordbot/pkg/askfaz"
 	_ "github.com/angch/discordbot/pkg/echo"
 	_ "github.com/angch/discordbot/pkg/stoic"
 )
