@@ -18,12 +18,13 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"strings"
 
-	"github.com/angch/discordbot/pkg/engineersmy"
-	"github.com/bwmarrin/discordgo"
+	"github.com/angch/discordbot/pkg/bothandler"
 	"github.com/spf13/cobra"
+	"gopkg.in/irc.v3"
 )
 
 // sendmsgCmd represents the sendmsg command
@@ -32,27 +33,87 @@ var sendmsgCmd = &cobra.Command{
 	Short: "Send a message to channel as bot, outside of the event loop",
 	Long:  `Send a message to channel as bot, outside of the event loop`,
 	Run: func(cmd *cobra.Command, args []string) {
-		token := os.Getenv("TOKEN")
-		dg, err := discordgo.New("Bot " + token)
-		if err != nil {
-			fmt.Println("error creating Discord session,", err)
-			return
-		}
-
-		if len(args) < 2 {
+		if len(args) < 3 {
 			log.Println("Not enough params")
 			return
 		}
-		channel := args[0]
-		mesg := strings.Join(args[1:], " ")
+		platform := args[0]
+		channel := args[1]
+		mesg := strings.Join(args[2:], " ")
+		sc := make(chan os.Signal, 1)
 
-		channelId, ok := engineersmy.KnownChannels[channel]
-		if !ok {
-			log.Println("Unknown channel", channel)
-			return
+		if platform == "discord" || platform == "all" {
+			discordtoken := os.Getenv("DISCORDTOKEN")
+			if discordtoken != "" {
+				n, err := bothandler.NewMessagePlatformFromDiscord(discordtoken)
+				if err != nil {
+					log.Fatal(err)
+				}
+				bothandler.RegisterPassiveMessagePlatform(n)
+			}
 		}
 
-		_, err = dg.ChannelMessageSend(channelId, mesg)
+		if platform == "slack" || platform == "all" {
+			slackAppToken := os.Getenv("SLACK_APP_TOKEN")
+			slackBotToken := os.Getenv("SLACK_BOT_TOKEN")
+			if slackAppToken != "" && slackBotToken != "" {
+				if !strings.HasPrefix(slackAppToken, "xapp-") {
+					fmt.Fprintf(os.Stderr, "SLACK_APP_TOKEN must have the prefix \"xapp-\".")
+				}
+				if !strings.HasPrefix(slackBotToken, "xoxb-") {
+					fmt.Fprintf(os.Stderr, "SLACK_BOT_TOKEN must have the prefix \"xoxb-\".")
+				}
+
+				s, err := bothandler.NewMessagePlatformFromSlack(slackBotToken, slackAppToken)
+				if err != nil {
+					log.Fatal(err)
+				}
+				s.DefaultChannel = "random"
+				bothandler.RegisterPassiveMessagePlatform(s)
+			}
+		}
+
+		if platform == "telegram" || platform == "all" {
+			telegramBotToken := os.Getenv("TELEGRAM_BOT_TOKEN")
+			if telegramBotToken != "" {
+				s, err := bothandler.NewMessagePlatformFromTelegram(telegramBotToken)
+				if err != nil {
+					log.Fatal(err)
+				}
+				s.DefaultChannel = "offtopic"
+				log.Println("Telegram bot is now running.")
+				bothandler.RegisterMessagePlatform(s)
+				go s.ProcessMessages()
+			}
+		}
+
+		if platform == "irc" || platform == "all" {
+			ircConn := os.Getenv("IRC_CONN")
+			if ircConn != "" {
+				ircParams, err := url.Parse(ircConn)
+				if err == nil {
+					password, _ := ircParams.User.Password()
+					username := ircParams.User.Username()
+					config := irc.ClientConfig{
+						User: username,
+						Nick: username,
+						Name: username,
+						Pass: password,
+					}
+					s, err := bothandler.NewMessagePlatformFromIrc(ircParams.Host, &config, sc)
+					if err != nil {
+						log.Fatal(err)
+					}
+					s.DefaultChannel = strings.TrimPrefix(ircParams.Path, "/")
+
+					log.Println("Irc bot is now running.")
+					bothandler.RegisterMessagePlatform(s)
+					go s.ProcessMessages()
+				}
+			}
+		}
+
+		err := bothandler.ChannelMessageSend(channel, mesg)
 		if err != nil {
 			log.Println(err)
 		}

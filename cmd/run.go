@@ -18,42 +18,16 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/angch/discordbot/pkg/bothandler"
-	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/cobra"
+	"gopkg.in/irc.v3"
 )
-
-func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m.Author.ID == s.State.User.ID {
-		return
-	}
-
-	// FIXME: This can be better
-	// Part of first stage refac
-	h, ok := bothandler.Handlers[m.Content]
-	if ok {
-		response := h()
-		_, err := s.ChannelMessageSend(m.ChannelID, response)
-		if err != nil {
-			log.Println(err)
-		}
-	}
-
-	// Can be better to decouple 1 to 1 of message : response
-	for _, v := range bothandler.CatchallHandlers {
-		r := v(m.Content)
-		if r != "" {
-			_, err := s.ChannelMessageSend(m.ChannelID, r)
-			if err != nil {
-				log.Println(err)
-			}
-		}
-	}
-}
 
 // runCmd represents the run command
 var runCmd = &cobra.Command{
@@ -61,28 +35,79 @@ var runCmd = &cobra.Command{
 	Short: "Run the discordbot",
 	Long:  `Run the discordbot`,
 	Run: func(cmd *cobra.Command, args []string) {
-		token := os.Getenv("TOKEN")
-		dg, err := discordgo.New("Bot " + token)
-		if err != nil {
-			fmt.Println("error creating Discord session,", err)
-			return
-		}
-
-		dg.AddHandler(messageCreate)
-		dg.Identify.Intents = discordgo.IntentsGuildMessages
-
-		err = dg.Open()
-		if err != nil {
-			fmt.Println("error opening connection,", err)
-			return
-		}
-
-		fmt.Println("Bot is now running.  Press CTRL-C to exit.")
 		sc := make(chan os.Signal, 1)
+
+		discordtoken := os.Getenv("DISCORDTOKEN")
+		if discordtoken != "" {
+			n, err := bothandler.NewMessagePlatformFromDiscord(discordtoken)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println("Discord Bot is now running.")
+			bothandler.RegisterMessagePlatform(n)
+			go n.ProcessMessages()
+		}
+
+		slackAppToken := os.Getenv("SLACK_APP_TOKEN")
+		slackBotToken := os.Getenv("SLACK_BOT_TOKEN")
+		if slackAppToken != "" && slackBotToken != "" {
+			if !strings.HasPrefix(slackAppToken, "xapp-") {
+				fmt.Fprintf(os.Stderr, "SLACK_APP_TOKEN must have the prefix \"xapp-\".")
+			}
+			if !strings.HasPrefix(slackBotToken, "xoxb-") {
+				fmt.Fprintf(os.Stderr, "SLACK_BOT_TOKEN must have the prefix \"xoxb-\".")
+			}
+
+			s, err := bothandler.NewMessagePlatformFromSlack(slackBotToken, slackAppToken)
+			if err != nil {
+				log.Fatal(err)
+			}
+			s.DefaultChannel = "#random"
+			log.Println("Slack bot is now running.")
+			bothandler.RegisterMessagePlatform(s)
+			go s.ProcessMessages()
+		}
+
+		telegramBotToken := os.Getenv("TELEGRAM_BOT_TOKEN")
+		if telegramBotToken != "" {
+			s, err := bothandler.NewMessagePlatformFromTelegram(telegramBotToken)
+			if err != nil {
+				log.Fatal(err)
+			}
+			s.DefaultChannel = "offtopic"
+			log.Println("Telegram bot is now running.")
+			bothandler.RegisterMessagePlatform(s)
+			go s.ProcessMessages()
+		}
+
+		ircConn := os.Getenv("IRC_CONN")
+		if ircConn != "" {
+			ircParams, err := url.Parse(ircConn)
+			if err == nil {
+				password, _ := ircParams.User.Password()
+				username := ircParams.User.Username()
+				config := irc.ClientConfig{
+					User: username,
+					Nick: username,
+					Name: username,
+					Pass: password,
+				}
+				s, err := bothandler.NewMessagePlatformFromIrc(ircParams.Host, &config, sc)
+				if err != nil {
+					log.Fatal(err)
+				}
+				s.DefaultChannel = strings.TrimPrefix(ircParams.Path, "/")
+
+				log.Println("Irc bot is now running.")
+				bothandler.RegisterMessagePlatform(s)
+				go s.ProcessMessages()
+			}
+		}
+
 		signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 		<-sc
 
-		dg.Close()
+		bothandler.Shutdown()
 	},
 }
 
