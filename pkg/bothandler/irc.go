@@ -87,11 +87,11 @@ func (s *IrcMessagePlatform) ProcessMessages() {
 			}
 		}
 	})
-	// Create the client
-	client := irc.NewClient(s.Conn, *s.ClientConfig)
-	s.Client = client
 
+	// Create the client
 	for {
+		client := irc.NewClient(s.Conn, *s.ClientConfig)
+		s.Client = client
 		err := client.Run()
 		if err != nil {
 			log.Println(err)
