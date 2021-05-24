@@ -19,6 +19,7 @@ var gifLinks = []string {
 var responseMap = map[string]string{
 	"omae wa mou shindeiru"	: "Nani?!",
 	"omae wa mo shindeiru"	: "Nani?!",
+	"omaewamoushindeiru"	: "Nani?!",
 	"omaewamoshindeiru"	: "Nani?!",
 	"お前はもう死んでいる"	: "なに?!",
 }
