@@ -62,7 +62,7 @@ var runCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
-			s.DefaultChannel = "#random"
+			s.DefaultChannel = "random"
 			log.Println("Slack bot is now running.")
 			bothandler.RegisterMessagePlatform(s)
 			go s.ProcessMessages()
