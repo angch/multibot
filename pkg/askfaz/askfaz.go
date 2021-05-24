@@ -1,6 +1,7 @@
 package askfaz
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/angch/discordbot/pkg/bothandler"
@@ -19,9 +20,9 @@ var triggers = []string{
 	"serverless",
 }
 
-var untriggers = []string{
-	"faz",
-	"tech_tarik",
+var handles = []string{
+	"@faz",
+	"@tech_tarik",
 }
 
 func init() {
@@ -39,14 +40,14 @@ func AskFazHandler(input string) string {
 	}
 
 	uncount := 0
-	for _, v := range untriggers {
+	for _, v := range handles {
 		if strings.Contains(i, v) {
 			uncount++
 		}
 	}
 
 	if count >= 3 && uncount == 0 {
-		return "Good question, @tech_tarik, what do you think?"
+		return fmt.Sprintf("Good question, %s, what do you think?", strings.Join(handles[:], "/"))
 	}
 
 	return ""
