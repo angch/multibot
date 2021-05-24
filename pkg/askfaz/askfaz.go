@@ -47,7 +47,7 @@ func AskFazHandler(input string) string {
 	}
 
 	if count >= 3 && uncount == 0 {
-		return fmt.Sprintf("Good question, %s, what do you think?", strings.Join(handles[:], "/"))
+		return fmt.Sprintf("Good question, %s, what do you think?", strings.Join(handles[0:1], "/"))
 	}
 
 	return ""
