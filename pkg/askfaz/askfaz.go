@@ -20,8 +20,8 @@ var triggers = []string{
 }
 
 var untriggers = []string{
-	"faz",
-	"tech_tarik",
+	"@faz",
+	"@tech_tarik",
 }
 
 func init() {
@@ -46,7 +46,7 @@ func AskFazHandler(input string) string {
 	}
 
 	if count >= 3 && uncount == 0 {
-		return "Good question, @tech_tarik, what do you think?"
+		return "Good question, @faz, what do you think?"
 	}
 
 	return ""
