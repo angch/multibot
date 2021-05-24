@@ -21,8 +21,8 @@ var triggers = []string{
 }
 
 var handles = []string{
-	"@faz",
-	"@tech_tarik",
+	"faz",
+	"tech_tarik",
 }
 
 func init() {
