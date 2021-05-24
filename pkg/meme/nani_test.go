@@ -1,6 +1,7 @@
 package meme
 
 import (
+	"fmt"
 	"testing"
 	"strings"
 )
@@ -36,6 +37,7 @@ func TestReplyNani(t *testing.T) {
         {"なに?!お前はもう死んでいる!!!!", "なに?!"},
     }
     for _, tc := range testCases {
+		want := fmt.Sprintf("%s %s", tc.want, expectedAsciiExplosion)
         if got := ReplyNani(tc.input); !strings.Contains(got, want) {
 			t.Errorf("ReplyNani(\"%s\") = \"%s\"; want \"%s\"", tc.input, got, want)
         }
