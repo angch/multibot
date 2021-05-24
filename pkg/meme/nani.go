@@ -20,7 +20,7 @@ var responseMap = map[string]string{
 	"omae wa mou shindeiru"	: "Nani?!",
 	"omae wa mo shindeiru"	: "Nani?!",
 	"omaewamoshindeiru"	: "Nani?!",
-	"お前はもう死んでいる"	  : "なに?!",
+	"お前はもう死んでいる"	: "なに?!",
 }
 
 func init() {
