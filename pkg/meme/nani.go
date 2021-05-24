@@ -25,18 +25,36 @@ var responseMap = map[string]string{
 }
 
 func init() {
-	bothandler.RegisterCatchallHandler(responseHandler)
+	bothandler.RegisterCatchallHandler(ReplyNani)
 }
 
-func responseHandler(input string) string {
+func getKeys(mapItem map[string]string) []string {
+    keys := make([]string, 0, len(mapItem))
+    for k := range mapItem {
+        keys = append(keys, k)
+    }
+	return keys
+}
+
+func ReplyNani(input string) string {
 	i := strings.ToLower(input)
 	response := "";
-	
-	rand.Seed(time.Now().Unix())
-	gifLink := gifLinks[rand.Intn(len(gifLinks))]
+	mapKey := ""
 
-	value, exists := responseMap[i]
+	// Check if input string contains any of the map keys
+    for _, key := range getKeys(responseMap) {
+		if (strings.Contains(i, key)) {
+			mapKey = key
+		}
+    }
+
+	value, exists := responseMap[mapKey]
+
 	if exists {
+		// Get random GIF link
+		rand.Seed(time.Now().Unix())
+		gifLink := gifLinks[rand.Intn(len(gifLinks))]
+
 		response = fmt.Sprintf("%s %s", value, gifLink)
 	}
 
