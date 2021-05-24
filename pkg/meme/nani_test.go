@@ -5,25 +5,39 @@ import (
 	"strings"
 )
 
+var expectedAsciiExplosion = "```" +`.
+      _.-^^---....,,--
+  _--                  --_  
+ <                        >)
+ |                         | 
+  \._                   _./  
+     '''--. . , ; .--'''       
+           | |   |             
+        .-=||  | |=-.   
+        '-=#$%&%$#=-'   
+           | ;   |     
+  _____.,-#%&$@%#&#~,._____
+` + "```"
+
 func TestReplyNani(t *testing.T) {
     testCases := []struct {
         input  string
         want string
     }{
-        {"omaewamoushindeiru", "Nani?! https://tenor.com/"},
-        {"omaewamoshindeiru", "Nani?! https://tenor.com/"},
-        {"omae wa mou shindeiru", "Nani?! https://tenor.com/"},
-        {"omae wa mo shindeiru", "Nani?! https://tenor.com/"},
-        {"OMAEWAMOSHINDEIRU", "Nani?! https://tenor.com/"},
-        {"OmAe Wa MoU sHiNdEiRu", "Nani?! https://tenor.com/"},
-        {"omaewamoushindeiru...", "Nani?! https://tenor.com/"},
-        {"ooooomaewamoushindeiruuuuuu", "Nani?! https://tenor.com/"},
-        {"お前はもう死んでいる", "なに?! https://tenor.com/"},
-        {"なに?!お前はもう死んでいる!!!!", "なに?! https://tenor.com/"},
+        {"omaewamoushindeiru", "Nani?!"},
+        {"omaewamoshindeiru", "Nani?!"},
+        {"omae wa mou shindeiru", "Nani?!"},
+        {"omae wa mo shindeiru", "Nani?!"},
+        {"OMAEWAMOSHINDEIRU", "Nani?!"},
+        {"OmAe Wa MoU sHiNdEiRu", "Nani?!"},
+        {"omaewamoushindeiru...", "Nani?!"},
+        {"ooooomaewamoushindeiruuuuuu", "Nani?!"},
+        {"お前はもう死んでいる", "なに?!"},
+        {"なに?!お前はもう死んでいる!!!!", "なに?!"},
     }
     for _, tc := range testCases {
-        if got := ReplyNani(tc.input); !strings.Contains(got, tc.want) {
-			t.Errorf("ReplyNani(\"%s\") = \"%s\"; should include string \"%s\"", tc.input, got, tc.want)
+        if got := ReplyNani(tc.input); !strings.Contains(got, want) {
+			t.Errorf("ReplyNani(\"%s\") = \"%s\"; want \"%s\"", tc.input, got, want)
         }
     }
 }

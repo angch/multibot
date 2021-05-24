@@ -3,8 +3,6 @@ package meme
 import (
 	"fmt"
 	"strings"
-	"math/rand"
-	"time"
 
 	"github.com/angch/discordbot/pkg/bothandler"
 )
@@ -23,6 +21,20 @@ var responseMap = map[string]string{
 	"omaewamoshindeiru"	: "Nani?!",
 	"お前はもう死んでいる"	: "なに?!",
 }
+
+var asciiExplosion = "```" +`.
+      _.-^^---....,,--
+  _--                  --_  
+ <                        >)
+ |                         | 
+  \._                   _./  
+     '''--. . , ; .--'''       
+           | |   |             
+        .-=||  | |=-.   
+        '-=#$%&%$#=-'   
+           | ;   |     
+  _____.,-#%&$@%#&#~,._____
+` + "```"
 
 func init() {
 	bothandler.RegisterCatchallHandler(ReplyNani)
@@ -51,11 +63,7 @@ func ReplyNani(input string) string {
 	value, exists := responseMap[mapKey]
 
 	if exists {
-		// Get random GIF link
-		rand.Seed(time.Now().Unix())
-		gifLink := gifLinks[rand.Intn(len(gifLinks))]
-
-		response = fmt.Sprintf("%s %s", value, gifLink)
+		response = fmt.Sprintf("%s %s", value, asciiExplosion)
 	}
 
 	return response
