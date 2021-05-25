@@ -32,6 +32,4 @@ type fragment struct {
 var fragments = []fragment{
 	{"(╯°□°）╯︵ ┻━┻", "┬─┬ノ( º _ ºノ) "},
 	{"O.O", "(^_^)"},
-	{"omaewamoushindeiru", "nani?!"},
-	{"お前はもう死んでいる", "Haven’t merged yet, please try again later"},
 }
