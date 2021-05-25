@@ -11,6 +11,8 @@ A Discord(and Slack and Telegram and IRC) bot for fun and play
 
 `hello`
 
+`お前はもう死んでいる`
+
 ## Where to try
 
 * https://t.me/EngineersMY
