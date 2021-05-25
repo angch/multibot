@@ -53,7 +53,10 @@ func discordMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	h, ok := Handlers[m.Content]
 	if ok {
 		response := h()
-		_, err := s.ChannelMessageSend(m.ChannelID, response)
+		_, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
+			Content:   response,
+			Reference: m.Reference(),
+		})
 		if err != nil {
 			log.Println(err)
 		}
@@ -63,7 +66,10 @@ func discordMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	for _, v := range CatchallHandlers {
 		r := v(m.Content)
 		if r != "" {
-			_, err := s.ChannelMessageSend(m.ChannelID, r)
+			_, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
+				Content:   r,
+				Reference: m.Reference(),
+			})
 			if err != nil {
 				log.Println(err)
 			}
