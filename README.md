@@ -18,3 +18,5 @@ A Discord(and Slack and Telegram and IRC) bot for fun and play
 * https://discord.gg/jBKCfM2X
 
 * https://engineersmy.herokuapp.com/ (#random)
+
+* irc://libera.chat/engineers-my
