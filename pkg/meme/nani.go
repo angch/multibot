@@ -8,14 +8,14 @@ import (
 )
 
 var responseMap = map[string]string{
-	"omae wa mou shindeiru"	: "Nani?!",
-	"omae wa mo shindeiru"	: "Nani?!",
-	"omaewamoushindeiru"	: "Nani?!",
-	"omaewamoshindeiru"	: "Nani?!",
-	"お前はもう死んでいる"	: "なに?!",
+	"omae wa mou shindeiru": "Nani?!",
+	"omae wa mo shindeiru":  "Nani?!",
+	"omaewamoushindeiru":    "Nani?!",
+	"omaewamoshindeiru":     "Nani?!",
+	"お前はもう死んでいる":            "なに?!",
 }
 
-var asciiExplosion = "```" +`.
+var asciiExplosion = "```" + `.
       _.-^^---....,,--
   _--                  --_  
  <                        >)
@@ -34,24 +34,24 @@ func init() {
 }
 
 func getKeys(mapItem map[string]string) []string {
-    keys := make([]string, 0, len(mapItem))
-    for k := range mapItem {
-        keys = append(keys, k)
-    }
+	keys := make([]string, 0, len(mapItem))
+	for k := range mapItem {
+		keys = append(keys, k)
+	}
 	return keys
 }
 
 func ReplyNani(input string) string {
 	i := strings.ToLower(input)
-	response := "";
+	response := ""
 	mapKey := ""
 
 	// Check if input string contains any of the map keys
-    for _, key := range getKeys(responseMap) {
-		if (strings.Contains(i, key)) {
+	for _, key := range getKeys(responseMap) {
+		if strings.Contains(i, key) {
 			mapKey = key
 		}
-    }
+	}
 
 	value, exists := responseMap[mapKey]
 
