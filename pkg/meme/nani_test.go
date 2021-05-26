@@ -33,8 +33,8 @@ func TestReplyNani(t *testing.T) {
 		{"OmAe Wa MoU sHiNdEiRu", "Nani?!"},
 		{"omaewamoushindeiru...", "Nani?!"},
 		{"ooooomaewamoushindeiruuuuuu", "Nani?!"},
-		{"お前はもう死んでいる", "なに?!"},
-		{"なに?!お前はもう死んでいる!!!!", "なに?!"},
+		{"お前はもう死んでいる", "なに？！"},
+		{"なに?!お前はもう死んでいる!!!!", "なに？！"},
 	}
 	for _, tc := range testCases {
 		want := fmt.Sprintf("%s %s", tc.want, expectedAsciiExplosion)
