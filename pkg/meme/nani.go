@@ -37,6 +37,7 @@ func ReplyNani(input string) string {
 	i := strings.ToLower(input)
 
 	// Check if input string contains any of the map keys
+	// Note: order of iteration is random, because map.
 	for key, value := range responseMap {
 		if strings.Contains(i, key) {
 			return fmt.Sprintf("%s %s", value, asciiExplosion)
