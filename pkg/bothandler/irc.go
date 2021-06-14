@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	irc "gopkg.in/irc.v3"
 )
@@ -17,25 +18,33 @@ type IrcMessagePlatform struct {
 	Client         *irc.Client
 	DefaultChannel string
 	CloseMe        bool
+	serveraddr     string // in case we need to reconnect
 }
 
 func NewMessagePlatformFromIrc(serveraddr string, clientconfig *irc.ClientConfig, signal chan os.Signal) (*IrcMessagePlatform, error) {
-	// if clientconfig == nil {
-	// 	return nil, fmt.Errorf("No client config supplied")
-	// }
 	if clientconfig == nil {
 		clientconfig = &irc.ClientConfig{}
 	}
-	conn, err := tls.Dial("tcp", serveraddr, nil)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	return &IrcMessagePlatform{
-		Conn:         conn,
+	platform := IrcMessagePlatform{
 		Signal:       signal,
 		ClientConfig: clientconfig,
-	}, nil
+		serveraddr:   serveraddr,
+	}
+	err := platform.connect()
+	if err != nil {
+		return nil, err
+	}
+	return &platform, nil
+}
+
+func (s *IrcMessagePlatform) connect() error {
+	conn, err := tls.Dial("tcp", s.serveraddr, nil)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	s.Conn = conn
+	return nil
 }
 
 func (s *IrcMessagePlatform) ProcessMessages() {
@@ -99,6 +108,12 @@ func (s *IrcMessagePlatform) ProcessMessages() {
 				break
 			}
 			if err.Error() == "EOF" {
+				time.Sleep(5 * time.Second)
+				err := s.connect()
+				if err != nil {
+					// FIXME
+					break
+				}
 				continue
 			}
 		}
