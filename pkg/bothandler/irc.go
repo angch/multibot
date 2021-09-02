@@ -107,7 +107,8 @@ func (s *IrcMessagePlatform) ProcessMessages() {
 			if s.CloseMe {
 				break
 			}
-			if err.Error() == "EOF" {
+			x := err.Error()
+			if x == "EOF" || strings.HasPrefix(x, "use of closed network connection") {
 				time.Sleep(5 * time.Second)
 				err := s.connect()
 				if err != nil {
