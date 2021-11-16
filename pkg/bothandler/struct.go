@@ -3,8 +3,16 @@ package bothandler
 // We could use discordbot's handler system, but we have own wrappers here to make
 // multiplatform bots work.
 
+type Request struct {
+	Content  string
+	Platform string
+	Channel  string
+	From     string
+}
+
 type MessageHandler func() string
-type CatchallHandler func(string) string
+type CatchallHandler func(Request) string
+type ImageHandler func(string) string
 
 type MessagePlatform interface {
 	Send(string)
@@ -17,6 +25,7 @@ type AddMessagePlatform func(MessagePlatform)
 
 var Handlers = map[string]MessageHandler{}
 var CatchallHandlers = []CatchallHandler{}
+var ImageHandlers = []ImageHandler{}
 var AddMessagePlatforms = []AddMessagePlatform{}
 var ActiveMessagePlatforms = []MessagePlatform{}
 
@@ -26,6 +35,10 @@ func RegisterMessageHandler(m string, h MessageHandler) {
 
 func RegisterCatchallHandler(h CatchallHandler) {
 	CatchallHandlers = append(CatchallHandlers, h)
+}
+
+func RegisterImageHandler(h ImageHandler) {
+	ImageHandlers = append(ImageHandlers, h)
 }
 
 // Yes, weird. All the modules register themselves,

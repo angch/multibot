@@ -33,8 +33,8 @@ func init() {
 	bothandler.RegisterCatchallHandler(ReplyNani)
 }
 
-func ReplyNani(input string) string {
-	i := strings.ToLower(input)
+func ReplyNani(request bothandler.Request) string {
+	i := strings.ToLower(request.Content)
 
 	// Check if input string contains any of the map keys
 	// Note: order of iteration is random, because map.

@@ -64,7 +64,11 @@ func discordMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Can be better to decouple 1 to 1 of message : response
 	for _, v := range CatchallHandlers {
-		r := v(m.Content)
+		username := ""
+		if m.Author != nil {
+			username = m.Author.Username
+		}
+		r := v(Request{m.Content, "discord", m.ChannelID, username})
 		if r != "" {
 			_, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
 				Content:   r,

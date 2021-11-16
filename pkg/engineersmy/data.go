@@ -11,5 +11,5 @@ var KnownChannels = map[string]string{
 var KnownTelegramChannels = map[string]int{
 	"offtopic": -1001430213215,
 	"general":  -1001430213215,
-	"":         -1001430213215,
+//	"":         -1001430213215,
 }

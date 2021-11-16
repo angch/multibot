@@ -129,7 +129,8 @@ func (s *SlackMessagePlatform) ProcessMessages() {
 
 						// Can be better to decouple 1 to 1 of message : response
 						for _, v := range CatchallHandlers {
-							r := v(content)
+							// FIXME
+							r := v(Request{content, "slack", "", ""})
 							if r != "" {
 								_, _, err := s.Client.PostMessage(ev.Channel, slack.MsgOptionText(r, false))
 								if err != nil {

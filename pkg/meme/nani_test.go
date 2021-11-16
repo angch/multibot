@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/angch/discordbot/pkg/bothandler"
 )
 
 var expectedAsciiExplosion = "```" + `.
@@ -38,7 +40,8 @@ func TestReplyNani(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		want := fmt.Sprintf("%s %s", tc.want, expectedAsciiExplosion)
-		if got := ReplyNani(tc.input); !strings.Contains(got, want) {
+		r := bothandler.Request{tc.input, "", "", ""}
+		if got := ReplyNani(r); !strings.Contains(got, want) {
 			t.Errorf("ReplyNani(\"%s\") = \"%s\"; want \"%s\"", tc.input, got, want)
 		}
 	}
@@ -54,7 +57,8 @@ func TestReplyNaniNoMatches(t *testing.T) {
 		{"お???", ""},
 	}
 	for _, tc := range testCases {
-		if got := ReplyNani(tc.input); got != tc.want {
+		r := bothandler.Request{tc.input, "", "", ""}
+		if got := ReplyNani(r); got != tc.want {
 			t.Errorf("ReplyNani(\"%s\") = \"%s\"; want \"%s\"", tc.input, got, tc.want)
 		}
 	}
