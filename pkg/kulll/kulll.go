@@ -92,10 +92,6 @@ func MoinHandler(request bothandler.Request) string {
 
 	i := strings.ToLower(input)
 
-	lock.Lock()
-	history[key] = History{i}
-	lock.Unlock()
-
 	count := 0
 	for _, v := range triggers {
 		if strings.Contains(i, v) {
@@ -112,6 +108,9 @@ func MoinHandler(request bothandler.Request) string {
 
 	if count >= 1 && uncount == 0 {
 		pick := rand.Intn(len(triggers))
+		lock.Lock()
+		history[key] = History{i}
+		lock.Unlock()
 		go save()
 		return triggers[pick]
 	}
