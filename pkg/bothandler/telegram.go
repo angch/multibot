@@ -2,7 +2,10 @@ package bothandler
 
 import (
 	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"os"
 	"sync"
 
 	"github.com/angch/discordbot/pkg/engineersmy"
@@ -68,7 +71,8 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 
 		// Can be better to decouple 1 to 1 of message : response
 		for _, v := range CatchallHandlers {
-			r := v(content)
+			// FIXME
+			r := v(Request{content, "telegram", "", ""})
 			if r != "" {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, r)
 				msg.ReplyToMessageID = update.Message.MessageID
@@ -78,7 +82,84 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 				}
 			}
 		}
+
+		m := update.Message
+
+		if m.Photo != nil {
+			// FIXME: Actual exec path never goes through here.
+			targetPixels := 512 * 512
+			best := &tgbotapi.PhotoSize{}
+			bestSize := 100000000
+
+			for _, v := range *m.Photo {
+				pixels := v.Height * v.Width
+				diff := targetPixels - pixels
+				if diff < 0 {
+					diff = -diff
+				}
+				if diff < bestSize {
+					bestSize = diff
+					best = &v
+				}
+			}
+			log.Printf("photosize %+v\n", best)
+			// FIXME:
+			filename := "tmp/" + best.FileID
+			err := s.botDownload(best.FileID, filename)
+			if err != nil {
+				log.Println(err)
+			}
+			for _, v := range ImageHandlers {
+				r := v(filename)
+				if r != "" {
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, r)
+					msg.ReplyToMessageID = update.Message.MessageID
+					_, err := s.Client.Send(msg)
+					if err != nil {
+						log.Println(err)
+					}
+				}
+			}
+
+			if false {
+				os.Remove(filename)
+			}
+		}
 	}
+}
+
+func (s *TelegramMessagePlatform) botDownload(fileId string, localFilename string) error {
+	bot := s.Client
+	downloadUrl, err := bot.GetFileDirectURL(fileId)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	log.Println("Downloading", downloadUrl)
+
+	get, err := http.Get(downloadUrl)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	reader := get.Body
+	defer reader.Close()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	out, err := os.Create(localFilename)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, reader)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *TelegramMessagePlatform) Send(text string) {

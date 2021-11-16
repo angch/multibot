@@ -79,7 +79,8 @@ func (s *IrcMessagePlatform) ProcessMessages() {
 
 				// Can be better to decouple 1 to 1 of message : response
 				for _, v := range CatchallHandlers {
-					r := v(content)
+					// FIXME
+					r := v(Request{content, "IRC", "", ""})
 					if r != "" {
 						err := c.WriteMessage(&irc.Message{
 							Command: "PRIVMSG",

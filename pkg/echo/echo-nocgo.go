@@ -1,3 +1,4 @@
+//go:build !cgo
 // +build !cgo
 
 package echo
@@ -7,9 +8,9 @@ import (
 	"strings"
 )
 
-func EchoHandler(input string) string {
-	i := strings.ToLower(input)
-	if strings.Contains(i, "uwu") || strings.Contains(input, "(ꈍᴗꈍ)") {
+func EchoHandler(request bothandler.Request) string {
+	i := strings.ToLower(request.Content)
+	if strings.Contains(i, "uwu") || strings.Contains(i, "(ꈍᴗꈍ)") {
 		return "(ꈍᴗꈍ)"
 	}
 

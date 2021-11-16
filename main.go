@@ -20,8 +20,10 @@ import (
 	_ "github.com/angch/discordbot/pkg/apod"
 	_ "github.com/angch/discordbot/pkg/askfaz"
 	_ "github.com/angch/discordbot/pkg/echo"
-	_ "github.com/angch/discordbot/pkg/stoic"
 	_ "github.com/angch/discordbot/pkg/meme"
+	_ "github.com/angch/discordbot/pkg/moin"
+	_ "github.com/angch/discordbot/pkg/stoic"
+	//	_ "github.com/angch/discordbot/pkg/ocr"
 )
 
 func main() {

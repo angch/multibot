@@ -61,7 +61,7 @@ outer:
 
 		// Can be better to decouple 1 to 1 of message : response
 		for _, v := range CatchallHandlers {
-			r := v(content)
+			r := v(Request{content, "readline", "", ""})
 			if r != "" {
 				log.Println("Bot says", r)
 			}

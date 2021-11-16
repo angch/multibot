@@ -29,7 +29,8 @@ func init() {
 	bothandler.RegisterCatchallHandler(AskFazHandler)
 }
 
-func AskFazHandler(input string) string {
+func AskFazHandler(r bothandler.Request) string {
+	input := r.Content
 	i := strings.ToLower(input)
 
 	count := 0
