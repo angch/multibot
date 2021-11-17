@@ -17,7 +17,7 @@ import (
 var triggers = []string{
 	"m0in", "moin", "morning",
 	"Selamat pagi!", "ohaiyo",
-	"早安", "boin",
+	"早安", "boin", "yawn",
 }
 
 var handles = []string{
@@ -29,7 +29,7 @@ type History struct {
 	Input string
 }
 
-var lock sync.Mutex
+var lock = sync.Mutex{}
 var history map[string]History
 
 func init() {
@@ -52,9 +52,7 @@ func load() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		lock.Lock()
 		err = json.Unmarshal(b, &history)
-		lock.Unlock()
 		if err != nil {
 			log.Fatal(err)
 		}
