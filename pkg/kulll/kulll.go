@@ -16,8 +16,10 @@ import (
 
 var triggers = []string{
 	"m0in", "moin", "morning",
-	"Selamat pagi!", "ohaiyo",
+	"Selamat pagi", "ohaiyo",
 	"早安", "boin", "yawn",
+	"おはよう", "Guten Morgen",
+	"zzzz", "Magandang umaga",
 }
 
 var handles = []string{
@@ -92,14 +94,16 @@ func MoinHandler(request bothandler.Request) string {
 
 	count := 0
 	for _, v := range triggers {
-		if strings.Contains(i, v) {
+		// Trigger is also the response, so some of them are in caps.
+		if strings.Contains(i, strings.ToLower(v)) {
 			count++
 		}
 	}
 
 	uncount := 0
 	for _, v := range handles {
-		if strings.Contains(i, v) {
+		// Trigger is also the response, so some of them are in caps.
+		if strings.Contains(i, strings.ToLower(v)) {
 			uncount++
 		}
 	}
