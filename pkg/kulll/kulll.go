@@ -35,7 +35,7 @@ var lock = sync.Mutex{}
 var history map[string]History
 
 func init() {
-	bothandler.RegisterCatchallHandler(MoinHandler)
+	bothandler.RegisterCatchallHandler(KulllHandler)
 	load()
 	rand.Seed(time.Now().Unix())
 	// math.Rand()
@@ -78,7 +78,7 @@ func save() {
 	f.Close()
 }
 
-func MoinHandler(request bothandler.Request) string {
+func KulllHandler(request bothandler.Request) string {
 	input := request.Content
 	// Jan 2 15:04:05 2006 MST
 	today := time.Now().Local().Format("20060102")
