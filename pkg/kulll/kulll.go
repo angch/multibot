@@ -20,7 +20,7 @@ var triggers = []string{
 	"早安", "boin", "yawn",
 	"おはよう", "Guten Morgen",
 	"zzzz", "Magandang umaga",
-	"Goedemorgen",
+	"Goedemorgen", "Goeiemorgen",
 }
 
 var handles = []string{
