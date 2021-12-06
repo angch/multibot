@@ -11,6 +11,7 @@ type Request struct {
 }
 
 type MessageHandler func() string
+type MessageWithInputHandler func(Request) string
 type CatchallHandler func(Request) string
 type ImageHandler func(string) string
 
@@ -24,10 +25,15 @@ type MessagePlatform interface {
 type AddMessagePlatform func(MessagePlatform)
 
 var Handlers = map[string]MessageHandler{}
+var MsgInputHandlers = map[string]MessageWithInputHandler{}
 var CatchallHandlers = []CatchallHandler{}
 var ImageHandlers = []ImageHandler{}
 var AddMessagePlatforms = []AddMessagePlatform{}
 var ActiveMessagePlatforms = []MessagePlatform{}
+
+func RegisterMessageWithInputHandler(m string, h MessageWithInputHandler) {
+	MsgInputHandlers[m] = h
+}
 
 func RegisterMessageHandler(m string, h MessageHandler) {
 	Handlers[m] = h

@@ -138,6 +138,24 @@ func (s *SlackMessagePlatform) ProcessMessages() {
 								}
 							}
 						}
+
+						sliced_content := strings.SplitN(content, " ", 2)
+						if len(sliced_content) > 1 {
+							command := sliced_content[0]
+							actual_content := sliced_content[1]
+
+							ih, ok := MsgInputHandlers[command]
+							if ok {
+								response := ih(Request{actual_content, "slack", "", ""})
+								if response != "" {
+									_, _, err := s.Client.PostMessage(ev.Channel, slack.MsgOptionText(response, false))
+									if err != nil {
+										log.Println(err)
+									}
+								}
+							}
+						}
+
 					default:
 						log.Printf("Inner event %+v %T\n", ev, ev)
 					}

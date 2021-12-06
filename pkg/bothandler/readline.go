@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/chzyer/readline"
 )
@@ -57,6 +58,20 @@ outer:
 		if ok {
 			response := h()
 			log.Println("Bot says", response)
+		}
+
+		sliced_content := strings.SplitN(content, " ", 2)
+		if len(sliced_content) > 1 {
+			command := sliced_content[0]
+			actual_content := sliced_content[1]
+
+			ih, ok := MsgInputHandlers[command]
+			if ok {
+				response := ih(Request{actual_content, "readline", "", ""})
+				if response != "" {
+					log.Println("Bot says", response)
+				}
+			}
 		}
 
 		// Can be better to decouple 1 to 1 of message : response
