@@ -94,6 +94,30 @@ func (s *IrcMessagePlatform) ProcessMessages() {
 						}
 					}
 				}
+
+				sliced_content := strings.SplitN(content, " ", 2)
+				if len(sliced_content) > 1 {
+					command := sliced_content[0]
+					actual_content := sliced_content[1]
+
+					ih, ok := MsgInputHandlers[command]
+					if ok {
+						response := ih(Request{actual_content, "IRC", "", ""})
+						if response != "" {
+							err := c.WriteMessage(&irc.Message{
+								Command: "PRIVMSG",
+								Params: []string{
+									channel,
+									response,
+								},
+							})
+							if err != nil {
+								log.Println(err)
+							}
+						}
+					}
+				}
+
 			}
 		}
 	})

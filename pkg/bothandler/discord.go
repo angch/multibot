@@ -3,6 +3,7 @@ package bothandler
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/angch/discordbot/pkg/engineersmy"
 	"github.com/bwmarrin/discordgo"
@@ -76,6 +77,31 @@ func discordMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			})
 			if err != nil {
 				log.Println(err)
+			}
+		}
+	}
+
+	sliced_content := strings.SplitN(m.Content, " ", 2)
+	if len(sliced_content) > 1 {
+		command := sliced_content[0]
+		actual_content := sliced_content[1]
+
+		username := ""
+		if m.Author != nil {
+			username = m.Author.Username
+		}
+
+		ih, ok := MsgInputHandlers[command]
+		if ok {
+			response := ih(Request{actual_content, "discord", m.ChannelID, username})
+			if response != "" {
+				_, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
+					Content:   response,
+					Reference: m.Reference(),
+				})
+				if err != nil {
+					log.Println(err)
+				}
 			}
 		}
 	}
