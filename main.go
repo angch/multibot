@@ -24,6 +24,7 @@ import (
 	_ "github.com/angch/discordbot/pkg/meme"
 	_ "github.com/angch/discordbot/pkg/stoic"
 	_ "github.com/angch/discordbot/pkg/ymca"
+	_ "github.com/angch/discordbot/pkg/xkcd"
 	//	_ "github.com/angch/discordbot/pkg/ocr"
 )
 
