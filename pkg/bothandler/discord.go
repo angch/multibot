@@ -2,7 +2,10 @@ package bothandler
 
 import (
 	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"os"
 	"strings"
 
 	"github.com/angch/discordbot/pkg/engineersmy"
@@ -105,10 +108,54 @@ func discordMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		}
 	}
+
+	if m.Attachments != nil {
+		targetPixels := 512 * 512
+		best := &discordgo.MessageAttachment{}
+		bestSize := 100000000
+
+		for _, v := range m.Attachments {
+			if v == nil {
+				continue
+			}
+			pixels := v.Height * v.Width
+			diff := targetPixels - pixels
+			if diff < 0 {
+				diff = -diff
+			}
+			if diff < bestSize {
+				bestSize = diff
+				best = v
+			}
+			log.Printf("photosize %+v\n", best)
+			// FIXME:
+			filename := "tmp/" + best.ID
+			err := botDownload(best, filename)
+			if err != nil {
+				log.Println(err)
+			}
+			for _, v := range ImageHandlers {
+				r := v(filename)
+				if r != "" {
+					_, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
+						Content:   r,
+						Reference: m.Reference(),
+					})
+					if err != nil {
+						log.Println(err)
+					}
+				}
+			}
+
+			if false {
+				os.Remove(filename)
+			}
+		}
+	}
 }
 
 func (dg *DiscordMessagePlatform) ProcessMessages() {
-	fmt.Println("Discord Bot is now running.  Press CTRL-C to exit.")
+	// fmt.Println("Discord Bot is now running.  Press CTRL-C to exit.")
 
 	dg.Session.AddHandler(discordMessageCreate)
 }
@@ -126,4 +173,37 @@ func (s *DiscordMessagePlatform) ChannelMessageSend(channel, message string) err
 	_, err := s.Session.ChannelMessageSend(channelId, message)
 
 	return err
+}
+
+func botDownload(attachment *discordgo.MessageAttachment, localFilename string) error {
+	if attachment == nil {
+		return fmt.Errorf("No attachment")
+	}
+
+	downloadUrl := attachment.URL
+	log.Println("Downloading", downloadUrl)
+
+	get, err := http.Get(downloadUrl)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	reader := get.Body
+	defer reader.Close()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	out, err := os.Create(localFilename)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, reader)
+	if err != nil {
+		return err
+	}
+	return nil
 }
