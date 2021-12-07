@@ -2,7 +2,7 @@ package xkcd
 
 import (
 	"fmt"
-	"net/http"
+	"strconv"
 
 	"github.com/angch/discordbot/pkg/bothandler"
 )
@@ -12,42 +12,32 @@ func init() {
 	bothandler.RegisterMessageWithInputHandler("!explainxkcd", GetXKCDExplained)
 }
 
-func GetXKCD(request bothandler.Request) string {
-	input := request.Content
-
-	base_url := "https://www.xkcd.com/"
-
-	resp_url := fmt.Sprintf("%s%s/", base_url, input)
-
-	resp, err := http.Get(resp_url)
-
+func sanitize(input string) int {
+	n, err := strconv.Atoi(input)
 	if err != nil {
-		fmt.Println("Error retrieving explainxkcd link: ", err)
+		return -1
+	}
+	return n
+}
+
+func GetXKCD(request bothandler.Request) string {
+	num := sanitize(request.Content)
+	if num <= 0 {
 		return ""
 	}
 
-	defer resp.Body.Close()
-
+	resp_url := fmt.Sprintf("https://www.xkcd.com/%d/", num)
 	message := resp_url
 	return message
 }
 
 func GetXKCDExplained(request bothandler.Request) string {
-	input := request.Content
-
-	base_url := "https://www.explainxkcd.com/wiki/index.php/"
-
-	resp_url := fmt.Sprintf("%s%s", base_url, input)
-
-	resp, err := http.Get(resp_url)
-
-	if err != nil {
-		fmt.Println("Error retrieving explainxkcd link: ", err)
+	num := sanitize(request.Content)
+	if num <= 0 {
 		return ""
 	}
 
-	defer resp.Body.Close()
-
+	resp_url := fmt.Sprintf("https://www.explainxkcd.com/wiki/index.php?title=%d", num)
 	message := resp_url
 	return message
 }
