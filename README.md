@@ -15,6 +15,12 @@ A Discord(and Slack and Telegram and IRC) bot for fun and play
 
 `お前はもう死んでいる`
 
+`whymca?`
+
+`!xkcd 356`
+
+`!explainxkcd 356`
+
 ## Where to try
 
 * https://t.me/EngineersMY
