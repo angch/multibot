@@ -21,6 +21,8 @@ A Discord(and Slack and Telegram and IRC) bot for fun and play
 
 `!explainxkcd 356`
 
+`selamat pagi!`
+
 ## Where to try
 
 * https://t.me/EngineersMY
