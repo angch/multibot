@@ -23,9 +23,10 @@ import (
 	_ "github.com/angch/discordbot/pkg/kulll"
 	_ "github.com/angch/discordbot/pkg/meme"
 	_ "github.com/angch/discordbot/pkg/stoic"
-	_ "github.com/angch/discordbot/pkg/ymca"
 	_ "github.com/angch/discordbot/pkg/xkcd"
-	//	_ "github.com/angch/discordbot/pkg/ocr"
+	_ "github.com/angch/discordbot/pkg/ymca"
+	_ "github.com/angch/discordbot/pkg/ynot"
+	//	_ "github.com/angch/discordbot/pkg/ocr" // deprecated
 )
 
 func main() {
