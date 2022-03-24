@@ -40,7 +40,7 @@ func TestReplyNani(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		want := fmt.Sprintf("%s %s", tc.want, expectedAsciiExplosion)
-		r := bothandler.Request{tc.input, "", "", ""}
+		r := bothandler.Request{Content: tc.input, Platform: "", Channel: "", From: ""}
 		if got := ReplyNani(r); !strings.Contains(got, want) {
 			t.Errorf("ReplyNani(\"%s\") = \"%s\"; want \"%s\"", tc.input, got, want)
 		}
@@ -57,7 +57,7 @@ func TestReplyNaniNoMatches(t *testing.T) {
 		{"お???", ""},
 	}
 	for _, tc := range testCases {
-		r := bothandler.Request{tc.input, "", "", ""}
+		r := bothandler.Request{Content: tc.input, Platform: "", Channel: "", From: ""}
 		if got := ReplyNani(r); got != tc.want {
 			t.Errorf("ReplyNani(\"%s\") = \"%s\"; want \"%s\"", tc.input, got, tc.want)
 		}
