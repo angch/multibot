@@ -3,13 +3,14 @@ package ynot
 import (
 	"math/rand"
 	"strings"
+	"sync"
 
 	"github.com/angch/discordbot/pkg/bothandler"
 )
 
 var triggers = [][]string{
-	{"why don't", "y not"},
-	{"just", "use", "try", "pay", "buy"},
+	{"why don't", "y not", "why dont"},
+	{"just", "use", "try", "pay", "buy", "pick"},
 	{"?", "in"},
 }
 
@@ -37,8 +38,16 @@ var excuses = []string{
 	"Our lawyers won't accept its T&Cs or license.",
 }
 
+var randomBufferLock = sync.Mutex{}
+var randomBuffer = []int{}
+var randomBufferIdx = 0
+
 func init() {
 	bothandler.RegisterCatchallHandler(YNotHandler)
+	randomBuffer = make([]int, len(excuses)/2)
+	for i := 0; i < len(randomBuffer); i++ {
+		randomBuffer[i] = -1
+	}
 }
 
 func ynot(i string) bool {
@@ -57,13 +66,35 @@ func ynot(i string) bool {
 	}
 
 	return count >= 3
+}
 
+// getShuffleRandom returns a random number, but minimizes repeats
+// https://www.ripleys.com/weird-news/is-shuffle-random/
+func getShuffleRandom() int {
+	r := -1
+	randomBufferLock.Lock()
+	defer randomBufferLock.Unlock()
+
+again:
+	for retries := 0; retries < 20; retries++ {
+		r = rand.Intn(len(excuses))
+		for i := 0; i < len(randomBuffer); i++ {
+			if randomBuffer[i] == r {
+				continue again
+			}
+		}
+		break
+	}
+	randomBuffer[randomBufferIdx] = r
+	randomBufferIdx = (randomBufferIdx + 1) % len(randomBuffer)
+
+	return r
 }
 
 func YNotHandler(r bothandler.Request) string {
 	input := r.Content
 	if ynot(input) {
-		random := rand.Intn(len(excuses))
+		random := getShuffleRandom()
 		return excuses[random]
 	}
 
