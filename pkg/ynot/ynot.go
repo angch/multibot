@@ -51,14 +51,22 @@ func init() {
 }
 
 func ynot(i string) bool {
+	if len(i) > 50 {
+		return false
+	}
 	i = strings.ToLower(i)
 
 	count := 0
-	for _, v := range triggers {
+	for k, v := range triggers {
 		for _, v2 := range v {
 			idx := strings.Index(i, v2)
 
 			if idx >= 0 {
+				if k > 0 {
+					if idx >= 100 {
+						continue
+					}
+				}
 				count++
 				i = i[idx:]
 			}
