@@ -20,7 +20,9 @@ func EchoHandler(request bothandler.Request) string {
 
 	for _, v := range fragments {
 		if strings.Contains(i, v.From) {
-			return v.To
+			if len(i) <= len(v.From)*7 {
+				return v.To
+			}
 		}
 	}
 	return ""
