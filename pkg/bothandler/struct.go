@@ -15,8 +15,13 @@ type MessageWithInputHandler func(Request) string
 type CatchallHandler func(Request) string
 type ImageHandler func(string) string
 
+type SendOptions struct {
+	Silent bool
+}
+
 type MessagePlatform interface {
 	Send(string)
+	SendWithOptions(string, SendOptions)
 	ProcessMessages()
 	Close()
 	ChannelMessageSend(channel string, message string) error

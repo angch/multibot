@@ -163,6 +163,13 @@ func (s *IrcMessagePlatform) Send(text string) {
 	}
 }
 
+func (s *IrcMessagePlatform) SendWithOptions(text string, options SendOptions) {
+	if s == nil {
+		return
+	}
+	s.Send(text)
+}
+
 func (s *IrcMessagePlatform) ChannelMessageSend(channelId, message string) error {
 	if channelId == "" {
 		channelId = s.DefaultChannel

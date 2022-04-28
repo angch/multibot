@@ -40,10 +40,27 @@ func NewMessagePlatformFromDiscord(discordtoken string) (*DiscordMessagePlatform
 }
 
 // Send to default channel
-func (dg *DiscordMessagePlatform) Send(m string) {
-	_, err := dg.Session.ChannelMessageSend(dg.Channels[""], m)
-	if err != nil {
-		log.Println(err)
+func (dg *DiscordMessagePlatform) Send(text string) {
+	if dg != nil {
+		dg.SendWithOptions(text, SendOptions{})
+	}
+}
+
+func (dg *DiscordMessagePlatform) SendWithOptions(text string, options SendOptions) {
+	if dg == nil {
+		return
+	}
+	if options.Silent {
+		// FIXME: Figuure out how to use ChannelMessageSendComplex to send silent messages
+		_, err := dg.Session.ChannelMessageSend(dg.Channels[""], text)
+		if err != nil {
+			log.Println(err)
+		}
+	} else {
+		_, err := dg.Session.ChannelMessageSend(dg.Channels[""], text)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 }
 
