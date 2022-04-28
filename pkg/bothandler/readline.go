@@ -38,6 +38,13 @@ func (s *ReadlineMessagePlatform) Send(text string) {
 	log.Println(text)
 }
 
+func (s *ReadlineMessagePlatform) SendWithOptions(text string, options SendOptions) {
+	if s == nil {
+		return
+	}
+	s.Send(text)
+}
+
 func (s *ReadlineMessagePlatform) ProcessMessages() {
 	l := s.Instance
 outer:

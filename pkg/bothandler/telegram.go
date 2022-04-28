@@ -186,9 +186,24 @@ func (s *TelegramMessagePlatform) Send(text string) {
 	if s == nil {
 		return
 	}
-	err := s.ChannelMessageSend("", text)
-	if err != nil {
-		log.Println(err)
+	s.SendWithOptions(text, SendOptions{})
+
+}
+
+func (s *TelegramMessagePlatform) SendWithOptions(text string, options SendOptions) {
+	if s == nil {
+		return
+	}
+	if options.Silent {
+		err := s.ChannelMessageSilentSend("", text)
+		if err != nil {
+			log.Println(err)
+		}
+	} else {
+		err := s.ChannelMessageSend("", text)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 }
 
@@ -205,6 +220,25 @@ func (s *TelegramMessagePlatform) ChannelMessageSend(channel, message string) er
 		return fmt.Errorf("Unknown channel %s", channel)
 	}
 	msg := tgbotapi.NewMessage(int64(channelId), message)
+	_, err := s.Client.Send(msg)
+	if err != nil {
+		log.Println(err)
+	}
+	return err
+}
+
+// ChannelMessageSilentSend is FIXME: dupe of ChannelMessageSend with DisableNotification
+func (s *TelegramMessagePlatform) ChannelMessageSilentSend(channel, message string) error {
+	if channel == "" {
+		channel = s.DefaultChannel
+	}
+	channelId, ok := engineersmy.KnownTelegramChannels[channel]
+	if !ok {
+		log.Println("Unknown channel", channel)
+		return fmt.Errorf("Unknown channel %s", channel)
+	}
+	msg := tgbotapi.NewMessage(int64(channelId), message)
+	msg.DisableNotification = true
 	_, err := s.Client.Send(msg)
 	if err != nil {
 		log.Println(err)

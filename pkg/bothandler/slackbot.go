@@ -242,6 +242,13 @@ func (s *SlackMessagePlatform) Send(text string) {
 	}
 }
 
+func (s *SlackMessagePlatform) SendWithOptions(text string, options SendOptions) {
+	if s == nil || s.SocketModeClient == nil {
+		return
+	}
+	s.Send(text)
+}
+
 func (s *SlackMessagePlatform) Close() {
 }
 

@@ -167,7 +167,7 @@ func Apod() {
 
 			text := fmt.Sprintf("%s %s", p.Text, p.ImageURL)
 			for _, v := range MessagePlatforms {
-				v.Send(text)
+				v.SendWithOptions(text, bothandler.SendOptions{Silent: true})
 			}
 		}
 
