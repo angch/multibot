@@ -152,7 +152,13 @@ func discordMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				log.Println(err)
 			}
 			for _, v := range ImageHandlers {
-				r := v(filename)
+				username := ""
+				if m.Author != nil {
+					username = m.Author.Username
+				}
+
+				req := Request{m.Content, "discord", m.ChannelID, username}
+				r := v(filename, req)
 				if r != "" {
 					_, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
 						Content:   r,

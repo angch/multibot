@@ -44,7 +44,6 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 		log.Fatal(err)
 	}
 	for update := range updates {
-		// log.Printf("%+v\n", update)
 		if update.Message == nil { // ignore any non-Message Updates
 			continue
 		}
@@ -54,8 +53,6 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 		s.KnownUsers[update.Message.From.UserName] = *update.Message.From
 		s.KnownUsersLock.Unlock()
 
-		// msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-		// msg.ReplyToMessageID = update.Message.MessageID
 		content := update.Message.Text
 
 		h, ok := Handlers[content]
@@ -122,7 +119,7 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 					best = &v
 				}
 			}
-			log.Printf("photosize %+v\n", best)
+			// log.Printf("photosize %+v\n", best)
 			// FIXME:
 			filename := "tmp/" + best.FileID
 			err := s.botDownload(best.FileID, filename)
@@ -130,7 +127,12 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 				log.Println(err)
 			}
 			for _, v := range ImageHandlers {
-				r := v(filename)
+				// log.Printf("%+v\n", m)
+				c := content
+				if c == "" {
+					c = m.Caption
+				}
+				r := v(filename, Request{c, "telegram", "", ""})
 				if r != "" {
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, r)
 					msg.ReplyToMessageID = update.Message.MessageID
