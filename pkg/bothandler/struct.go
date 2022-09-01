@@ -13,7 +13,7 @@ type Request struct {
 type MessageHandler func() string
 type MessageWithInputHandler func(Request) string
 type CatchallHandler func(Request) string
-type ImageHandler func(string) string
+type ImageHandler func(string, Request) string
 
 type SendOptions struct {
 	Silent bool
