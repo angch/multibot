@@ -113,6 +113,7 @@ func doYMD(y, m, d int) *ApodPost {
 					// https://www.youtube.com/embed/zIqG42AD4Gw?rel=0
 					// to
 					// https://www.youtube.com/watch?v=zIqG42AD4Gw
+					imgUrl = strings.ReplaceAll(imgUrl, "/embed/", "/watch?v=")
 				}
 			}
 		})
