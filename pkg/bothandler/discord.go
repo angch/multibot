@@ -1,6 +1,7 @@
 package bothandler
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -97,6 +98,38 @@ func discordMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			})
 			if err != nil {
 				log.Println(err)
+			}
+		}
+	}
+
+	// Can be better to decouple 1 to 1 of message : response
+	for _, v := range CatchallExtendedHandlers {
+		r := v(ExtendedMessage{Text: m.Content})
+		if r != nil {
+			if r.Text != "" {
+				_, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
+					Content:   r.Text,
+					Reference: m.Reference(),
+				})
+				if err != nil {
+					log.Println(err)
+				}
+			}
+			if r.Image != nil {
+				fileImage := discordgo.File{
+					Name: m.Content + ".jpg",
+					// ContentType: "image/jpeg",
+					Reader: bytes.NewReader(r.Image),
+				}
+				msg := &discordgo.MessageSend{
+					Content:   m.Content,
+					Reference: m.Reference(),
+					Files:     []*discordgo.File{&fileImage},
+				}
+				_, err := s.ChannelMessageSendComplex(m.ChannelID, msg)
+				if err != nil {
+					log.Println(err)
+				}
 			}
 		}
 	}
