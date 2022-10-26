@@ -43,9 +43,9 @@ func GetMessage(input bothandler.ExtendedMessage) *bothandler.ExtendedMessage {
 		return nil
 	}
 
-	u := sd_url
+	u := *sd_url
 	q := u.Query()
-	q.Add("q", i)
+	q.Set("q", i)
 	u.RawQuery = q.Encode()
 
 	resp, err := http.Get(u.String())
