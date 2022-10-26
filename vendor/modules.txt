@@ -10,6 +10,9 @@ github.com/bwmarrin/discordgo
 # github.com/chzyer/readline v1.5.1
 ## explicit; go 1.15
 github.com/chzyer/readline
+# github.com/flytam/filenamify v1.1.1
+## explicit; go 1.13
+github.com/flytam/filenamify
 # github.com/fsnotify/fsnotify v1.5.4
 ## explicit; go 1.16
 github.com/fsnotify/fsnotify
