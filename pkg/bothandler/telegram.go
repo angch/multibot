@@ -81,6 +81,33 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 			}
 		}
 
+		// Can be better to decouple 1 to 1 of message : response
+		for _, v := range CatchallExtendedHandlers {
+			r := v(ExtendedMessage{Text: content})
+			if r != nil {
+				if r.Text != "" {
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, r.Text)
+					msg.ReplyToMessageID = update.Message.MessageID
+					_, err := s.Client.Send(msg)
+					if err != nil {
+						log.Println(err)
+					}
+				}
+				if r.Image != nil {
+					photoFileBytes := tgbotapi.FileBytes{
+						Name:  content,
+						Bytes: r.Image,
+					}
+					msg := tgbotapi.NewPhotoUpload(update.Message.Chat.ID, photoFileBytes)
+					msg.ReplyToMessageID = update.Message.MessageID
+					_, err := s.Client.Send(msg)
+					if err != nil {
+						log.Println(err)
+					}
+				}
+			}
+		}
+
 		sliced_content := strings.SplitN(content, " ", 2)
 		if len(sliced_content) > 1 {
 			command := sliced_content[0]

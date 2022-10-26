@@ -19,6 +19,12 @@ type SendOptions struct {
 	Silent bool
 }
 
+type ExtendedMessage struct {
+	Text  string
+	Image []byte
+}
+type CatchallExtendedHandler func(ExtendedMessage) *ExtendedMessage
+
 type MessagePlatform interface {
 	Send(string)
 	SendWithOptions(string, SendOptions)
@@ -32,6 +38,7 @@ type AddMessagePlatform func(MessagePlatform)
 var Handlers = map[string]MessageHandler{}
 var MsgInputHandlers = map[string]MessageWithInputHandler{}
 var CatchallHandlers = []CatchallHandler{}
+var CatchallExtendedHandlers = []CatchallExtendedHandler{}
 var ImageHandlers = []ImageHandler{}
 var AddMessagePlatforms = []AddMessagePlatform{}
 var ActiveMessagePlatforms = []MessagePlatform{}
@@ -46,6 +53,9 @@ func RegisterMessageHandler(m string, h MessageHandler) {
 
 func RegisterCatchallHandler(h CatchallHandler) {
 	CatchallHandlers = append(CatchallHandlers, h)
+}
+func RegisterCatchallExtendeHandler(h CatchallExtendedHandler) {
+	CatchallExtendedHandlers = append(CatchallExtendedHandlers, h)
 }
 
 func RegisterImageHandler(h ImageHandler) {
