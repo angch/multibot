@@ -1,5 +1,13 @@
 package bothandler
 
+import (
+	"fmt"
+	"log"
+	"strings"
+
+	"github.com/flytam/filenamify"
+)
+
 // We could use discordbot's handler system, but we have own wrappers here to make
 // multiplatform bots work.
 
@@ -97,4 +105,15 @@ func ChannelMessageSend(channelId string, message string) error {
 		}
 	}
 	return nil
+}
+
+func sanitizeFilename(f string, extension string) string {
+	f = strings.ReplaceAll(f, " ", "_")
+	filename := fmt.Sprintf("%s.%s", f, extension)
+	filename, err := filenamify.Filenamify(filename, filenamify.Options{Replacement: "_"})
+	if err != nil {
+		log.Println(err)
+		return "badfilename." + extension
+	}
+	return filename
 }
