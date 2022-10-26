@@ -12,18 +12,22 @@ import (
 	"github.com/angch/discordbot/pkg/bothandler"
 )
 
-var sd_url url.URL
+var sd_url *url.URL
 
 func init() {
 	bothandler.RegisterCatchallExtendeHandler(GetMessage)
-	sd_url := os.Getenv("SD_URL")
-	if sd_url == "" {
+	sd_urlString := os.Getenv("SD_URL")
+	if sd_urlString == "" {
 		log.Fatal("Need valid env SD_URL")
 	}
-	_, err := url.Parse(sd_url)
+	sd, err := url.Parse(sd_urlString)
 	if err != nil {
 		log.Fatal("Need valid env SD_URL")
 	}
+	if sd.Scheme != "http" && sd.Scheme != "https" {
+		log.Fatal("Need valid env SD_URL")
+	}
+	sd_url = sd
 }
 
 /*
