@@ -1,6 +1,7 @@
 package standarddiffusion
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -34,6 +35,10 @@ func init() {
 {"id":21,"body":"The soul becomes dyed with the color of its thoughts.","author_id":1,"author":"Marcus Aurelius"}
 */
 
+type JsonResponse struct {
+	Error string `json:"error"`
+}
+
 func GetMessage(input bothandler.ExtendedMessage) *bothandler.ExtendedMessage {
 	i := strings.ToLower(input.Text)
 
@@ -64,7 +69,29 @@ func GetMessage(input bothandler.ExtendedMessage) *bothandler.ExtendedMessage {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Println(err)
+		return &bothandler.ExtendedMessage{
+			Text:  "Zzzz server is sleeping",
+			Image: nil,
+		}
 	}
+
+	if len(body) > 0 && body[0] == '{' {
+		// It's likely an error
+		msg := JsonResponse{}
+		err := json.Unmarshal(body, &msg)
+		if msg.Error != "" && err == nil {
+			return &bothandler.ExtendedMessage{
+				Text:  msg.Error,
+				Image: nil,
+			}
+		} else {
+			return &bothandler.ExtendedMessage{
+				Text:  "Zzzz server is sleeping",
+				Image: nil,
+			}
+		}
+	}
+
 	return &bothandler.ExtendedMessage{
 		Text:  "",
 		Image: body,
