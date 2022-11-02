@@ -95,7 +95,7 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 				}
 				if r.Image != nil {
 					photoFileBytes := tgbotapi.FileBytes{
-						Name:  sanitizeFilename(content, ".jpg"),
+						Name:  sanitizeFilename(content, ".png"),
 						Bytes: r.Image,
 					}
 					msg := tgbotapi.NewPhotoUpload(update.Message.Chat.ID, photoFileBytes)
