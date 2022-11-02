@@ -109,6 +109,9 @@ func ChannelMessageSend(channelId string, message string) error {
 
 func sanitizeFilename(f string, extension string) string {
 	f = strings.ReplaceAll(f, " ", "_")
+	if len(f) > 94 {
+		f = f[:94]
+	}
 	filename := fmt.Sprintf("%s.%s", f, extension)
 	filename, err := filenamify.Filenamify(filename, filenamify.Options{Replacement: "_"})
 	if err != nil {

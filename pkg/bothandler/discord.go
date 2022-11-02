@@ -117,7 +117,7 @@ func discordMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 			if r.Image != nil {
 				fileImage := discordgo.File{
-					Name: sanitizeFilename(m.Content, "jpg"),
+					Name: sanitizeFilename(m.Content, "png"),
 					// ContentType: "image/jpeg",
 					Reader: bytes.NewReader(r.Image),
 				}
