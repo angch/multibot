@@ -3,7 +3,6 @@ package sdapi
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -60,12 +59,15 @@ func (s *Server) Txt2Img(prompt string) ([]byte, error) {
 	// "data:image/png;base64,xxxx"
 	if strings.HasPrefix(first, "data:image/png;base64,") {
 		first = first[len("data:image/png;base64,"):]
-		image, err := base64.StdEncoding.DecodeString(first)
-		if err != nil {
-			return nil, err
-		}
-		return image, nil
 	}
 
-	return nil, fmt.Errorf("No image")
+	image, err := base64.StdEncoding.DecodeString(first)
+	if err != nil {
+		return nil, err
+	}
+	return image, nil
+	// log.Println(string(body))
+	// log.Printf("%+v\n", result)
+
+	// return nil, fmt.Errorf("No image")
 }

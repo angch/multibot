@@ -82,7 +82,7 @@ func NewTxt2ImgParameters() *Txt2ImgParameters {
 	s.SeedResizeFromW = -1
 	s.BatchSize = 1
 	s.NIter = 1
-	s.Steps = 50
+	s.Steps = 30
 	s.CfgScale = 7
 	s.Width = 512
 	s.Height = 512
