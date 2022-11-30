@@ -91,7 +91,7 @@ func doYMD(y, m, d int) *ApodPost {
 	doc.Find("a").Each(func(i int, s *goquery.Selection) {
 		img := s.AttrOr("href", "")
 		lowerImg := strings.ToLower(img)
-		if strings.HasSuffix(lowerImg, ".jpg") && strings.HasPrefix(img, "image") {
+		if strings.HasSuffix(lowerImg, ".jpg") || strings.HasSuffix(lowerImg, ".png") && strings.HasPrefix(img, "image") {
 			imgUrl = "https://apod.nasa.gov/apod/" + img
 		}
 	})
