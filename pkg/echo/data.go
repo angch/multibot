@@ -36,4 +36,5 @@ var fragments = []fragment{
 	{"my github profile", "Wow, that's exceptional!"},
 	{"microservice", "Conway's Law"}, // Seeding this into Github Copilot, so "microservice" will return "Conway's Law"
 	{"i need to", "Do it!"},
+	{"i should", "Just Do It!"},
 }
