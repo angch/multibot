@@ -62,6 +62,10 @@ type ApodPost struct {
 	ImageURL string
 }
 
+func findlinks() string {
+
+}
+
 func doYMD(y, m, d int) *ApodPost {
 	if y > 2000 {
 		// Perlism
@@ -91,8 +95,13 @@ func doYMD(y, m, d int) *ApodPost {
 	doc.Find("a").Each(func(i int, s *goquery.Selection) {
 		img := s.AttrOr("href", "")
 		lowerImg := strings.ToLower(img)
-		if strings.HasSuffix(lowerImg, ".jpg") || strings.HasSuffix(lowerImg, ".png") && strings.HasPrefix(img, "image") {
-			imgUrl = "https://apod.nasa.gov/apod/" + img
+		if !strings.HasPrefix(lowerImg, "http") && (strings.HasSuffix(lowerImg, ".jpg") || strings.HasSuffix(lowerImg, ".png") && strings.HasPrefix(img, "image")) {
+			// We usually only want the *first* one.
+			if imgUrl == "" {
+				imgUrl = "https://apod.nasa.gov/apod/" + img
+			} else {
+				// 2nd link to image which probably is wrong
+			}
 		}
 	})
 	title := ""
