@@ -16,7 +16,7 @@ import (
 
 var triggers = []string{
 	"m0in", "moin", "morning",
-	"Selamat pagi", "ohaiyo",
+	"Selamat pagi", "ohayo",
 	"早安", "boin", "yawn",
 	"おはよう", "Guten Morgen",
 	"zzzz", "Magandang umaga",
