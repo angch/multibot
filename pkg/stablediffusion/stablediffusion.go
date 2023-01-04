@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/angch/discordbot/pkg/bothandler"
-	"github.com/angch/discordbot/pkg/standarddiffusion/sdapi"
+	"github.com/angch/discordbot/pkg/stablediffusion/sdapi"
 )
 
 var sd_url *url.URL
