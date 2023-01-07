@@ -6,27 +6,27 @@ import (
 )
 
 type Info struct {
-	Prompt                string      `json:"prompt"`
-	AllPrompts            []string    `json:"all_prompts"`
-	NegativePrompt        string      `json:"negative_prompt"`
-	Seed                  int         `json:"seed"`
-	AllSeeds              []int       `json:"all_seeds"`
-	Subseed               int         `json:"subseed"`
-	AllSubseeds           []int       `json:"all_subseeds"`
-	SubseedStrength       float64     `json:"subseed_strength"`
-	Width                 int         `json:"width"`
-	Height                int         `json:"height"`
-	SamplerIndex          int         `json:"sampler_index"`
-	Sampler               string      `json:"sampler"`
-	CfgScale              float64     `json:"cfg_scale"`
-	Steps                 int         `json:"steps"`
-	BatchSize             int         `json:"batch_size"`
-	RestoreFaces          bool        `json:"restore_faces"`
-	FaceRestorationModel  interface{} `json:"face_restoration_model"`
-	SdModelHash           string      `json:"sd_model_hash"`
-	SeedResizeFromW       int         `json:"seed_resize_from_w"`
-	SeedResizeFromH       int         `json:"seed_resize_from_h"`
-	DenoisingStrength     float64     `json:"denoising_strength"`
+	Prompt                string   `json:"prompt"`
+	AllPrompts            []string `json:"all_prompts"`
+	NegativePrompt        string   `json:"negative_prompt"`
+	Seed                  int      `json:"seed"`
+	AllSeeds              []int    `json:"all_seeds"`
+	Subseed               int      `json:"subseed"`
+	AllSubseeds           []int    `json:"all_subseeds"`
+	SubseedStrength       float64  `json:"subseed_strength"`
+	Width                 int      `json:"width"`
+	Height                int      `json:"height"`
+	SamplerIndex          int      `json:"sampler_index"`
+	Sampler               string   `json:"sampler"`
+	CfgScale              float64  `json:"cfg_scale"`
+	Steps                 int      `json:"steps"`
+	BatchSize             int      `json:"batch_size"`
+	RestoreFaces          bool     `json:"restore_faces"`
+	FaceRestorationModel  *string  `json:"face_restoration_model"`
+	SdModelHash           string   `json:"sd_model_hash"`
+	SeedResizeFromW       int      `json:"seed_resize_from_w"`
+	SeedResizeFromH       int      `json:"seed_resize_from_h"`
+	DenoisingStrength     float64  `json:"denoising_strength"`
 	ExtraGenerationParams struct {
 	} `json:"extra_generation_params"`
 	IndexOfFirstImage int      `json:"index_of_first_image"`
