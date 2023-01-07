@@ -3,6 +3,7 @@ package sdapi
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -12,6 +13,11 @@ import (
 
 type Server struct {
 	URL *url.URL
+
+	NegativePrompt string
+	EnhancedPrompt string
+	Models         map[string]Model
+	Config         *Config
 }
 
 func NewServer(host string) *Server {
@@ -20,8 +26,12 @@ func NewServer(host string) *Server {
 		log.Println(err)
 		return nil
 	}
-
-	return &Server{URL: u}
+	s := Server{URL: u}
+	s.NegativePrompt = strings.Join(negativePromptsArray, ", ")
+	s.EnhancedPrompt = strings.Join(enhancedPrompts, ", ")
+	s.Models = make(map[string]Model, 0)
+	s.Config, _ = s.GetConfig()
+	return &s
 }
 
 var negativePromptsArray = []string{
@@ -45,43 +55,30 @@ var negativePromptsArray = []string{
 	"low quality",
 }
 
-var negativePrompt string
-
 var enhancedPrompts = []string{
-	// "dark and gloomy",
-	// "full body",
 	"8k unity render",
 	"skin pores",
 	"detailed iris",
-	// "very dark lighting",
-	// "heavy shadows",
 	"detailed",
 	"detailed face",
 	"(vibrant)",
-	// "photo realistic",
-	// "realistic",
-	// "dramatic",
-	// "dark",
 	"sharp focus",
 	"(8k)",
-}
-
-var enhancedPrompt string
-
-func init() {
-	negativePrompt = strings.Join(negativePromptsArray, ", ")
-	enhancedPrompt = strings.Join(enhancedPrompts, ", ")
 }
 
 func (s *Server) Txt2Img(prompt string) ([]byte, error) {
 	// quick hack
 	p := NewTxt2ImgParameters()
 	p.Prompt = prompt
+	p.RestoreFaces = true
+	p.Width = 768
+	p.Height = 768
+	p.Steps = 30
 
-	if len(prompt) < 20 {
-		p.Prompt = p.Prompt + ", " + enhancedPrompt
-	}
-	p.NegativePrompt = negativePrompt
+	// if len(prompt) < 20 {
+	// 	p.Prompt = p.Prompt + ", " + enhancedPrompt
+	// }
+	p.NegativePrompt = s.NegativePrompt
 	p.SetSampler("DDIM")
 
 	u := s.URL.String()
@@ -120,8 +117,85 @@ func (s *Server) Txt2Img(prompt string) ([]byte, error) {
 		return nil, err
 	}
 	return image, nil
-	// log.Println(string(body))
-	// log.Printf("%+v\n", result)
+}
 
-	// return nil, fmt.Errorf("No image")
+// /sdapi/v1/options
+func (s *Server) GetConfig() (*Config, error) {
+	u := s.URL.String()
+	u += "/sdapi/v1/options"
+	resp, err := http.Get(u)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	config := &Config{}
+	body := resp.Body
+	defer body.Close()
+	err = json.NewDecoder(body).Decode(config)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	return config, nil
+}
+
+// /sdapi/v1/sd-models
+func (s *Server) GetModels() ([]Model, error) {
+	u := s.URL.String()
+	u += "/sdapi/v1/sd-models"
+	resp, err := http.Get(u)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	models := []Model{}
+	body := resp.Body
+	defer body.Close()
+	err = json.NewDecoder(body).Decode(&models)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	for _, v := range models {
+		s.Models[v.Hash] = v
+	}
+
+	return models, nil
+}
+
+func (s *Server) SetConfig(config *Config) error {
+	if config == nil {
+		return fmt.Errorf("config is nil")
+	}
+	u := s.URL.String()
+	u += "/sdapi/v1/options"
+	log.Println(u, config.IoReader().String())
+	resp, err := http.Post(u, "application/json", config.IoReader())
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	// FIXME: check http errorcode, etc
+
+	body, err := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	_ = body
+	// fmt.Println(string(body))
+	return nil
+}
+
+func (c *Config) SetModel(hash string, s *Server) {
+	if s == nil {
+		return
+	}
+	m, ok := s.Models[hash]
+	if !ok {
+		return
+	}
+	c.SdModelCheckpoint = m.Title
 }
