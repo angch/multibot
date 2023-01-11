@@ -31,6 +31,7 @@ type fragment struct {
 // choice emojis
 var fragments = []fragment{
 	{"(╯°□°）╯︵ ┻━┻", "┬─┬ノ( º _ ºノ) "},
+	{"(╯°□°)╯︵ ┻━┻", "┬─┬ノ( º _ ºノ) "}, // Goddammit, spacing.
 	{"O.O", "(^_^)"},
 	{"finds you well", "Nice demo! ^_^"},
 	{"my github profile", "Wow, that's exceptional!"},
