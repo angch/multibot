@@ -44,7 +44,7 @@ abcdefghijklmnopqrstuvwxyz
 🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩`
 
 func init() {
-	bothandler.RegisterCatchallHandler(UnicodeFontRplace)
+	bothandler.RegisterCatchallHandler(UnicodeFontReplace)
 
 	s := strings.Split(fontmapSrc, "\n")
 	for k, line := range s {
@@ -57,6 +57,9 @@ func init() {
 	}
 }
 
+// unicodeReplace replaces the characters in i with the characters in to
+// the fontmap. It returns the new string. If a character is not in the
+// fontmap, it is left as is.
 func unicodeReplace(to int, i string) string {
 	out := ""
 	for _, c := range i {
@@ -71,7 +74,7 @@ func unicodeReplace(to int, i string) string {
 	return out
 }
 
-func UnicodeFontRplace(request bothandler.Request) string {
+func UnicodeFontReplace(request bothandler.Request) string {
 	if !strings.HasPrefix(request.Content, "!unicode ") {
 		return ""
 	}
