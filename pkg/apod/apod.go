@@ -3,7 +3,7 @@ package apod
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -24,7 +24,7 @@ func init() {
 	posts = make(map[string]ApodPost)
 	f, err := os.Open("posts.js")
 	if err == nil {
-		b, err := ioutil.ReadAll(f)
+		b, err := io.ReadAll(f)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -62,10 +62,6 @@ type ApodPost struct {
 	ImageURL string
 }
 
-func findlinks() string {
-
-}
-
 func doYMD(y, m, d int) *ApodPost {
 	if y > 2000 {
 		// Perlism
@@ -99,7 +95,7 @@ func doYMD(y, m, d int) *ApodPost {
 			// We usually only want the *first* one.
 			if imgUrl == "" {
 				imgUrl = "https://apod.nasa.gov/apod/" + img
-			} else {
+			} else { // nolint
 				// 2nd link to image which probably is wrong
 			}
 		}
