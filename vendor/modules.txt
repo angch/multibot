@@ -53,6 +53,9 @@ github.com/pelletier/go-toml/v2/internal/characters
 github.com/pelletier/go-toml/v2/internal/danger
 github.com/pelletier/go-toml/v2/internal/tracker
 github.com/pelletier/go-toml/v2/unstable
+# github.com/siongui/gojianfan v0.0.0-20210926212422-2f175ac615de
+## explicit; go 1.17
+github.com/siongui/gojianfan
 # github.com/slack-go/slack v0.12.1
 ## explicit; go 1.16
 github.com/slack-go/slack

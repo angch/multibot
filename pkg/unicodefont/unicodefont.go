@@ -1,6 +1,7 @@
 package unicodefont
 
 import (
+	"github.com/siongui/gojianfan"
 	"log"
 	"math/rand"
 	"strings"
@@ -69,6 +70,14 @@ func unicodeReplace(to int, i string) string {
 		} else {
 			out += string(c)
 		}
+	}
+	origout := out
+	t2s := gojianfan.T2S(out)
+	s2t := gojianfan.S2T(out)
+	if origout != t2s {
+		out = t2s
+	} else if origout != s2t {
+		out = s2t
 	}
 
 	return out
