@@ -3,7 +3,7 @@ package kulll
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -34,11 +34,11 @@ type History struct {
 
 var lock = sync.Mutex{}
 var history map[string]History
+var myrand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func init() {
 	bothandler.RegisterCatchallHandler(KulllHandler)
 	load()
-	rand.Seed(time.Now().Unix())
 	// math.Rand()
 }
 
@@ -51,7 +51,7 @@ func load() {
 	history = make(map[string]History)
 	f, err := os.Open(savefile)
 	if err == nil {
-		b, err := ioutil.ReadAll(f)
+		b, err := io.ReadAll(f)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -110,7 +110,7 @@ func KulllHandler(request bothandler.Request) string {
 	}
 
 	if count >= 1 && uncount == 0 {
-		pick := rand.Intn(len(triggers))
+		pick := myrand.Intn(len(triggers))
 		lock.Lock()
 		history[key] = History{i}
 		lock.Unlock()

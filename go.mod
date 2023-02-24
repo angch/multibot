@@ -9,6 +9,7 @@ require (
 	github.com/flytam/filenamify v1.1.2
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/siongui/gojianfan v0.0.0-20210926212422-2f175ac615de
 	github.com/slack-go/slack v0.12.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
@@ -24,7 +25,6 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
-	github.com/siongui/gojianfan v0.0.0-20210926212422-2f175ac615de // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
