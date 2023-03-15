@@ -9,8 +9,6 @@ A Discord(and Slack and Telegram and IRC) bot for fun and play
 
 `o/`
 
-`!stoic`
-
 `hello`
 
 `お前はもう死んでいる`
