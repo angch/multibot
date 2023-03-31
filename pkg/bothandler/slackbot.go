@@ -1,6 +1,7 @@
 package bothandler
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -45,7 +46,7 @@ func NewMessagePlatformFromSlack(slackbottoken, slackapptoken string) (*SlackMes
 
 	socketmodeclient := socketmode.New(
 		client,
-		socketmode.OptionDebug(true),
+		socketmode.OptionDebug(false),
 		socketmode.OptionLog(log.New(os.Stdout, "socketmode: ", log.Lshortfile|log.LstdFlags)),
 	)
 
@@ -138,7 +139,45 @@ func (s *SlackMessagePlatform) ProcessMessages() {
 								}
 							}
 						}
+						// Can be better to decouple 1 to 1 of message : response
+						for _, v := range CatchallExtendedHandlers {
+							r := v(ExtendedMessage{Text: content})
+							if r != nil {
+								if r.Image == nil {
+									if r.Text != "" {
+										_, _, err := s.Client.PostMessage(ev.Channel, slack.MsgOptionText(r.Text, false))
+										if err != nil {
+											log.Println(err)
+										}
+									}
+								} else {
+									// r.Image is not nil
+									// Hack
+									words := strings.Split(ev.Text, " ")
+									if len(words) > 1 {
+										words = words[1:]
+									}
 
+									// FIXME: better sanitization
+									filename := strings.ReplaceAll(strings.ToLower(strings.Join(words, " ")), " ", "_") + ".png"
+
+									fileuploadparams := slack.FileUploadParameters{
+										Reader:          bytes.NewBuffer(r.Image),
+										Filename:        filename,
+										Title:           r.Text,
+										Channels:        []string{ev.Channel},
+										Filetype:        "image/png",
+										ThreadTimestamp: ev.ThreadTimeStamp,
+									}
+									file, err := s.Client.UploadFile(fileuploadparams)
+									if err != nil {
+										log.Println(err)
+									} else {
+										log.Printf("%+v\n", file)
+									}
+								}
+							}
+						}
 						sliced_content := strings.SplitN(content, " ", 2)
 						if len(sliced_content) > 1 {
 							command := sliced_content[0]
