@@ -12,7 +12,7 @@ func TestEchoHandler(t *testing.T) {
 		args string
 		want string
 	}{
-		{"1", "uwu", ""},
+		{"1", "uwu", "(ꈍᴗꈍ)"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

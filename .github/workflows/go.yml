@@ -44,12 +44,13 @@ jobs:
       run: cp target/release/libuwu.so ../
 
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3.5.0
       with:
-        go-version: 1.15
+        go-version: 'stable'
 
     - name: Build
       run: go build -ldflags="-r lib" -v ./...
 
     - name: Test
-      run: go test -ldflags="-r lib" -v ./...
+      # Hacks to make this uwu lib work. :<
+      run: LD_LIBRARY_PATH=`pwd`/lib go test -ldflags="-r lib" -v ./...
