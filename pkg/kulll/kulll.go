@@ -21,6 +21,7 @@ var triggers = []string{
 	"おはよう", "Guten Morgen",
 	"zzzz", "Magandang umaga",
 	"Goedemorgen", "Goeiemorgen",
+	"καλημέρα", "Kaliméra", "kalimera"
 }
 
 var handles = []string{
