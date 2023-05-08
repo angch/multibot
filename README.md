@@ -27,7 +27,7 @@ A Discord(and Slack and Telegram and IRC) bot for fun and play
 
 * https://discord.gg/K2NVrpvBhm
 
-* https://engineersmy.herokuapp.com/ (#random)
+* Slack: https://engineersmy.slack.com/ Get invite code via https://engineers.my/ (#random)
 
 * irc://libera.chat/engineers-my
 
