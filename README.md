@@ -36,3 +36,20 @@ A Discord(and Slack and Telegram and IRC) bot for fun and play
 https://austinhenley.com/blog/makinguselessstuff.html
 
 https://justforfunnoreally.dev/
+
+## How to contribute?
+
+1. Fork
+
+2. hack
+
+    go get ./...
+    CGO_ENBALED=0 go run . # Lazy to set up rust tooling
+
+3. test
+
+    go run . testbot # Test things as a CLI
+
+4. `git add && git commit && git push`
+
+5. submit pull request
