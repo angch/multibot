@@ -33,6 +33,6 @@ A Discord(and Slack and Telegram and IRC) bot for fun and play
 
 ## Why!?
 
-https://web.eecs.utk.edu/~azh/blog/makinguselessstuff.html
+~~https://web.eecs.utk.edu/~azh/blog/makinguselessstuff.html~~ [Archived](https://archive.is/LDpdY) 
 
 https://justforfunnoreally.dev/
