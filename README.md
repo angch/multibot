@@ -43,12 +43,16 @@ https://justforfunnoreally.dev/
 
 2. hack
 
-    go get ./...
-    CGO_ENBALED=0 go run . # Lazy to set up rust tooling
+```
+go get ./...
+CGO_ENBALED=0 go run . # Lazy to set up rust tooling
+```
 
 3. test
 
-    go run . testbot # Test things as a CLI
+```
+go run . testbot # Test things as a CLI
+```
 
 4. `git add && git commit && git push`
 
