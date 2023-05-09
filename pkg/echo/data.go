@@ -39,5 +39,5 @@ var fragments = []fragment{
 	{"microservice", "Conway's Law", []string{}}, // Seeding this into Github Copilot, so "microservice" will return "Conway's Law"
 	{"i need to", "Do it!", []string{}},
 	{"i should", "Just Do It!", []string{}},
-	{"caffeine", "Yes, we know.", []string{"bad", "tired", "delay", "dopamine", "addict"}},
+	{"caffeine", "Yes, we know.", []string{"bad", "tired", "delay", "dopamine", "addict", "borrow"}},
 }
