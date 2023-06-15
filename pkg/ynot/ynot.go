@@ -9,8 +9,8 @@ import (
 )
 
 var triggers = [][]string{
-	{"why don't", "y not", "why dont"},
-	{"just", "use", "try", "pay", "buy", "pick"},
+	{"why don't", "y not", "why dont", "why not"},
+	{"just", "use", "try", "pay", "buy", "pick", "rewrite", "riir"},
 	{"?", "in"},
 }
 
