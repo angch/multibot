@@ -20,6 +20,8 @@ func Test_ynot(t *testing.T) {
 		{"cobol1", args{"why don't we just code in COBOL"}, true},  // Reported by SM
 		{"cobol2", args{"why don't we just code in COBOL?"}, true}, // Reported by SM
 		{"nope", args{"why spacer don't we spacer spacer just code in COBOL? More text more text more text something else"}, false},
+		{"rirr1", args{"Why not rewrite it in Rust?"}, true},
+		{"rirr2", args{"Why not riir?"}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
