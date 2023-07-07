@@ -24,7 +24,7 @@ A multiplatform Bot on Discord, Slack, Telegram and IRC) for fun and play. "disc
 
 ## Where to try
 
-* https://t.me/EngineersMY
+* https://t.me/EngineersMY (Bot instance is named "angchmultibot")
 
 * https://discord.gg/K2NVrpvBhm
 
