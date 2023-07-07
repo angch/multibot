@@ -8,6 +8,7 @@ require (
 	github.com/chzyer/readline v1.5.1
 	github.com/flytam/filenamify v1.1.2
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
+	github.com/liyue201/goqr v0.0.0-20200803022322-df443203d4ea
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/siongui/gojianfan v0.0.0-20210926212422-2f175ac615de
 	github.com/slack-go/slack v0.12.2
