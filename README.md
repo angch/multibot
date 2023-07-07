@@ -1,5 +1,6 @@
 # discordbot
-A Discord(and Slack and Telegram and IRC) bot for fun and play
+
+A multiplatform Bot on Discord, Slack, Telegram and IRC) for fun and play. "discordbot" is a legacy name.
 
 ## Stuff to try
 
