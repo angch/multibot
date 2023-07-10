@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/angch/discordbot/pkg/bothandler"
+	"github.com/angch/discordbot/pkg/engineersmy"
 )
 
 // FIXME: This is a placeholder work in progress.
@@ -68,18 +69,37 @@ func save() {
 	defer lock.Unlock()
 }
 
+func isValidPlatformChannel(platform, channel string) bool {
+	switch platform {
+	case "discord":
+		ok := engineersmy.IsKnownDiscordChannel("spacetraders", channel)
+		// ok = ok || engineersmy.IsKnownDiscordChannel("sandbox", channel)
+		return ok
+	case "readline":
+		return true
+	default:
+		return false
+	}
+}
+
 func SpaceTradersHandler(request bothandler.Request) string {
 	if activeDev {
 		log.Printf("pkg/spacetraders/SpaceTradersHandler %+v\n", request)
 	}
+
+	if !isValidPlatformChannel(request.Platform, request.Channel) {
+		return ""
+	}
+
 	input := request.Content
 	// Jan 2 15:04:05 2006 MST
 	today := time.Now().Local().Format("20060102")
 	key := fmt.Sprintf("%s/%s/%s", request.Platform, request.Channel, today)
 	lock.Lock()
+	defer lock.Unlock()
 
 	_ = input
 	_ = key
 
-	return ""
+	return "spacetrader is WIP"
 }

@@ -24,6 +24,8 @@ import (
 	_ "github.com/angch/discordbot/pkg/meme"
 	_ "github.com/angch/discordbot/pkg/ocr"
 	_ "github.com/angch/discordbot/pkg/qrdecode"
+
+	// _ "github.com/angch/discordbot/pkg/spacetraders"
 	_ "github.com/angch/discordbot/pkg/stablediffusion"
 
 	// _ "github.com/angch/discordbot/pkg/stoic"
