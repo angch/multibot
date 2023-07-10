@@ -37,7 +37,7 @@ export LD_LIBRARY_PATH=`pwd`/lib/uwu/target/release
 
 to silence the annoying Rust linker.
 
-Or just turn oFF `CGO_ENABLED=0`:
+Or just turn off `CGO_ENABLED=0`:
 
 ```bash
 export CGO_ENABLED=0
