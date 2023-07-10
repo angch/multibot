@@ -24,19 +24,19 @@ A multiplatform Bot on Discord, Slack, Telegram and IRC) for fun and play. "disc
 
 ## Where to try
 
-* https://t.me/EngineersMY (Bot instance is named "angchmultibot")
+* <https://t.me/EngineersMY> (Bot instance is named "angchmultibot")
 
-* https://discord.gg/K2NVrpvBhm
+* <https://discord.gg/K2NVrpvBhm>
 
-* Slack: https://engineersmy.slack.com/ Get invite code via https://engineers.my/ (#random)
+* Slack: <https://engineersmy.slack.com/> Get invite code via <https://engineers.my/> (#random)
 
 * irc://libera.chat/engineers-my
 
 ## Why!?
 
-https://austinhenley.com/blog/makinguselessstuff.html
+<https://austinhenley.com/blog/makinguselessstuff.html>
 
-https://justforfunnoreally.dev/
+<https://justforfunnoreally.dev/>
 
 ## How to contribute?
 
@@ -44,17 +44,20 @@ https://justforfunnoreally.dev/
 
 2. hack
 
-```
-go get ./...
-CGO_ENBALED=0 go run . # Lazy to set up rust tooling
-```
+    ```bash
+    go get ./...
+    CGO_ENBALED=0 go run . # Lazy to set up rust tooling
+    ```
 
 3. test
 
-```
-go run . testbot # Test things as a CLI
-```
+    ```bash
+    go run . testbot # Test things as a CLI
+    ```
 
-4. `git add && git commit && git push`
+4. git
+    ```bash
+    git add && git commit && git push
+    ```
 
 5. submit pull request
