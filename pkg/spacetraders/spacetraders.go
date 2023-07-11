@@ -4,25 +4,36 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/angch/discordbot/pkg/bothandler"
 	"github.com/angch/discordbot/pkg/engineersmy"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 // FIXME: This is a placeholder work in progress.
 
-// ChannelAgent maps chat channels and platforms to Agent.Symbol
-type ChannelAgent struct {
+// PlatformChannel maps chat channels and platforms to Agent.Symbol
+type PlatformChannel struct {
 	Platform string
 	Channel  string
 }
 
-var globalState = map[ChannelAgent]Agent{}
+var globalState = map[PlatformChannel]Agent{}
+
+type ChannelAgents struct {
+	gorm.Model
+	Platform    string
+	Channel     string
+	AgentSymbol string
+}
 
 type Agent struct {
-	Symbol    string
+	gorm.Model
+	Symbol    string `gorm:"uniqueIndex"`
 	Faction   string
 	AuthToken string
 }
@@ -31,6 +42,7 @@ type AgentState struct {
 	Systems map[string]System
 	Ships   map[string]Ship
 }
+
 type Ship struct {
 	LastUpdate time.Time
 	Fuel       int
@@ -60,12 +72,20 @@ const savefile string = "spacetraders.sqlite"
 
 func load() {
 	lock.Lock()
-	defer lock.Unlock()
+	db, err := gorm.Open(sqlite.Open(savefile), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("failed to connect database: %v", err)
+	}
+	db.AutoMigrate(&ChannelAgents{}, &Agent{})
 
+	// FIXME: slurp everything into globalState
+
+	defer lock.Unlock()
 }
 
 func save() {
 	lock.Lock()
+	// FIXME: dump everything from globalState into spacetraders.sqlite
 	defer lock.Unlock()
 }
 
@@ -82,6 +102,16 @@ func isValidPlatformChannel(platform, channel string) bool {
 	}
 }
 
+func removeEmptyStrings(words []string) []string {
+	var ret []string
+	for _, w := range words {
+		if w != "" {
+			ret = append(ret, w)
+		}
+	}
+	return ret
+}
+
 func SpaceTradersHandler(request bothandler.Request) string {
 	if activeDev {
 		log.Printf("pkg/spacetraders/SpaceTradersHandler %+v\n", request)
@@ -92,14 +122,28 @@ func SpaceTradersHandler(request bothandler.Request) string {
 	}
 
 	input := request.Content
-	// Jan 2 15:04:05 2006 MST
-	today := time.Now().Local().Format("20060102")
-	key := fmt.Sprintf("%s/%s/%s", request.Platform, request.Channel, today)
-	lock.Lock()
-	defer lock.Unlock()
 
-	_ = input
-	_ = key
+	// Instead of a command, we route off the channel
+	words := removeEmptyStrings(strings.Split(input, " "))
+	if len(words) < 1 {
+		return ""
+	}
 
-	return "spacetrader is WIP"
+	channelAgent := PlatformChannel{request.Platform, request.Channel}
+	agentState, ok := globalState[channelAgent]
+	if !ok && words[0] != "init" {
+		return "This agent is not initialized"
+	}
+
+	switch words[0] {
+	case "status":
+		return fmt.Sprintf("%+v", agentState)
+	case "init":
+		if len(words) < 3 {
+			return "Need a callsign and faction"
+		}
+		return fmt.Sprintf("Registering callsign %s faction %s", words[1], words[2])
+	default:
+		return ""
+	}
 }
