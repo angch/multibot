@@ -10,7 +10,7 @@ import (
 
 	"github.com/angch/discordbot/pkg/bothandler"
 	"github.com/angch/discordbot/pkg/engineersmy"
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
