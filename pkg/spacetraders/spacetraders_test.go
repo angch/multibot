@@ -15,8 +15,10 @@ func Test_isValidPlatformChannel(t *testing.T) {
 		// TODO: Add test cases.
 		{"discord", args{"discord", "wrong"}, false},
 		{"general", args{"discord", "811472319876562989"}, false},
-		{"sandbox", args{"discord", "846297823624298517"}, true},
+		{"sandbox", args{"discord", "846297823624298517"}, false},
 		{"spacetraders", args{"discord", "1127471366501834763"}, true},
+		{"readline", args{"readline", ""}, true},
+		{"wrong", args{"badfasdfs", ""}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
