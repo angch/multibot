@@ -130,6 +130,7 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 		m := update.Message
 
 		if m.Photo != nil {
+			// log.Printf("photo %+v\n", m)
 			// FIXME: Actual exec path never goes through here.
 			targetPixels := 512 * 512
 			best := &tgbotapi.PhotoSize{}
@@ -154,7 +155,7 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 				log.Println(err)
 			}
 			for _, v := range ImageHandlers {
-				// log.Printf("%+v\n", m)
+				// log.Printf("image handlers %+v\n", m)
 				c := content
 				if c == "" {
 					c = m.Caption

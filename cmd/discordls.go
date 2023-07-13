@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,7 +37,7 @@ var discordlsCmd = &cobra.Command{
 			fmt.Println("error creating Discord session,", err)
 			return
 		}
-		discordChan, err := dg.Channel(engineersmy.KnownChannels["general"])
+		discordChan, err := dg.Channel(engineersmy.KnownDiscordChannels["general"])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -58,7 +58,7 @@ var discordlsCmd = &cobra.Command{
 		}
 		output += "`|----------------------|----------------------|`\n"
 
-		_, err = dg.ChannelMessageSend(engineersmy.KnownChannels["general"], output)
+		_, err = dg.ChannelMessageSend(engineersmy.KnownDiscordChannels["general"], output)
 		if err != nil {
 			log.Println(err)
 		}
