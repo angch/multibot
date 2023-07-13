@@ -85,7 +85,7 @@ outer:
 		for _, v := range CatchallHandlers {
 			r := v(Request{content, "readline", "", ""})
 			if r != "" {
-				log.Println("Bot says", r)
+				log.Println(">", r)
 			}
 		}
 

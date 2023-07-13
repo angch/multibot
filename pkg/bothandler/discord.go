@@ -36,7 +36,7 @@ func NewMessagePlatformFromDiscord(discordtoken string) (*DiscordMessagePlatform
 
 	return &DiscordMessagePlatform{
 		Session:  dg,
-		Channels: engineersmy.KnownChannels,
+		Channels: engineersmy.KnownDiscordChannels,
 	}, nil
 }
 
@@ -221,7 +221,7 @@ func (dg *DiscordMessagePlatform) Close() {
 }
 
 func (s *DiscordMessagePlatform) ChannelMessageSend(channel, message string) error {
-	channelId, ok := engineersmy.KnownChannels[channel]
+	channelId, ok := engineersmy.KnownDiscordChannels[channel]
 	if !ok {
 		log.Println("Unknown channel", channel)
 		return fmt.Errorf("Unknown channel %s", channel)
