@@ -22,7 +22,7 @@ type PlatformChannel struct {
 	Channel  string
 }
 
-var globalState = map[PlatformChannel]Agent{}
+var globalState = map[PlatformChannel]*Agent{}
 
 type ChannelAgents struct {
 	gorm.Model
@@ -55,9 +55,16 @@ type Waypoint struct {
 }
 
 var lock = sync.Mutex{}
-var myrand = rand.New(rand.NewSource(time.Now().UnixNano()))
-
 var activeDev = true
+
+type SpaceTraders struct {
+	Db   *gorm.DB
+	Rand *rand.Rand
+}
+
+var this = SpaceTraders{
+	Rand: rand.New(rand.NewSource(time.Now().UnixNano())),
+}
 
 func init() {
 	if activeDev {
@@ -72,15 +79,23 @@ const savefile string = "spacetraders.sqlite"
 
 func load() {
 	lock.Lock()
+	defer lock.Unlock()
+
 	db, err := gorm.Open(sqlite.Open(savefile), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)
 	}
 	db.AutoMigrate(&ChannelAgents{}, &Agent{})
+	this.Db = db
 
 	// FIXME: slurp everything into globalState
-
-	defer lock.Unlock()
+	ca := make([]ChannelAgents, 0)
+	db.Find(&ca)
+	for _, c := range ca {
+		ag := &Agent{}
+		db.First(ag, "symbol = ?", c.AgentSymbol)
+		globalState[PlatformChannel{c.Platform, c.Channel}] = ag
+	}
 }
 
 func save() {
@@ -139,10 +154,15 @@ func SpaceTradersHandler(request bothandler.Request) string {
 	case "status":
 		return fmt.Sprintf("%+v", agentState)
 	case "init":
+		if agentState != nil {
+			return "This agent is already initialized as" + agentState.Symbol
+		}
 		if len(words) < 3 {
 			return "Need a callsign and faction"
 		}
 		return fmt.Sprintf("Registering callsign %s faction %s", words[1], words[2])
+	case "agent":
+		return "agent detaisl is work in progress"
 	default:
 		return ""
 	}
