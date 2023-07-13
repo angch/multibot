@@ -56,6 +56,7 @@ A multiplatform Bot on Discord, Slack, Telegram and IRC) for fun and play. "disc
     ```
 
 4. git
+
     ```bash
     git add && git commit && git push
     ```
