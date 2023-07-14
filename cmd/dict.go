@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/angch/discordbot/pkg/dict"
+	"github.com/angch/multibot/pkg/dict"
 	"github.com/spf13/cobra"
 )
 

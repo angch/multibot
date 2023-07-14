@@ -3,7 +3,7 @@ package echo
 import (
 	"strings"
 
-	"github.com/angch/discordbot/pkg/bothandler"
+	"github.com/angch/multibot/pkg/bothandler"
 )
 
 func EchoHandler(request bothandler.Request) string {

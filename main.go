@@ -16,23 +16,24 @@ limitations under the License.
 package main
 
 import (
-	"github.com/angch/discordbot/cmd"
-	_ "github.com/angch/discordbot/pkg/apod"
-	_ "github.com/angch/discordbot/pkg/askfaz"
-	_ "github.com/angch/discordbot/pkg/echo"
-	_ "github.com/angch/discordbot/pkg/kulll"
-	_ "github.com/angch/discordbot/pkg/meme"
-	// _ "github.com/angch/discordbot/pkg/ocr"
-	_ "github.com/angch/discordbot/pkg/qrdecode"
+	"github.com/angch/multibot/cmd"
+	_ "github.com/angch/multibot/pkg/apod"
+	_ "github.com/angch/multibot/pkg/askfaz"
+	_ "github.com/angch/multibot/pkg/echo"
+	_ "github.com/angch/multibot/pkg/kulll"
+	_ "github.com/angch/multibot/pkg/meme"
 
-	_ "github.com/angch/discordbot/pkg/spacetraders"
-	_ "github.com/angch/discordbot/pkg/stablediffusion"
+	// _ "github.com/angch/multibot/pkg/ocr"
+	_ "github.com/angch/multibot/pkg/qrdecode"
 
-	// _ "github.com/angch/discordbot/pkg/stoic"
-	_ "github.com/angch/discordbot/pkg/unicodefont"
-	_ "github.com/angch/discordbot/pkg/xkcd"
-	_ "github.com/angch/discordbot/pkg/ymca"
-	_ "github.com/angch/discordbot/pkg/ynot"
+	_ "github.com/angch/multibot/pkg/spacetraders"
+	_ "github.com/angch/multibot/pkg/stablediffusion"
+
+	// _ "github.com/angch/multibot/pkg/stoic"
+	_ "github.com/angch/multibot/pkg/unicodefont"
+	_ "github.com/angch/multibot/pkg/xkcd"
+	_ "github.com/angch/multibot/pkg/ymca"
+	_ "github.com/angch/multibot/pkg/ynot"
 )
 
 func main() {

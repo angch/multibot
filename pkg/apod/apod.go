@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/angch/discordbot/pkg/bothandler"
+	"github.com/angch/multibot/pkg/bothandler"
 )
 
 var posts map[string]ApodPost

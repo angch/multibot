@@ -1,4 +1,4 @@
-module github.com/angch/discordbot
+module github.com/angch/multibot
 
 go 1.20
 

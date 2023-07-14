@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/angch/discordbot/pkg/bothandler"
+	"github.com/angch/multibot/pkg/bothandler"
 )
 
 var expectedAsciiExplosion = "```" + `.

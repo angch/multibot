@@ -20,7 +20,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/angch/discordbot/pkg/engineersmy"
+	"github.com/angch/multibot/pkg/engineersmy"
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/cobra"
 )

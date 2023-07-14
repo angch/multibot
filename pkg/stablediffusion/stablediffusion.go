@@ -10,8 +10,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/angch/discordbot/pkg/bothandler"
-	"github.com/angch/discordbot/pkg/stablediffusion/sdapi"
+	"github.com/angch/multibot/pkg/bothandler"
+	"github.com/angch/multibot/pkg/stablediffusion/sdapi"
 )
 
 var sd_url *url.URL

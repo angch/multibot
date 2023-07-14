@@ -1,13 +1,14 @@
 package unicodefont
 
 import (
-	"github.com/siongui/gojianfan"
 	"log"
 	"math/rand"
 	"strings"
 	"unicode/utf8"
 
-	"github.com/angch/discordbot/pkg/bothandler"
+	"github.com/siongui/gojianfan"
+
+	"github.com/angch/multibot/pkg/bothandler"
 )
 
 var fontmap = []string{}

@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/angch/discordbot/pkg/engineersmy"
+	"github.com/angch/multibot/pkg/engineersmy"
 	"github.com/bwmarrin/discordgo"
 )
 

@@ -1,3 +1,5 @@
+.PHONY: run
+
 build:
 	cd lib/uwu && cargo build --release
 	go build .
@@ -9,5 +11,5 @@ prerequisites:
 include dev.sh
 
 run:
-	LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./discordbot run
+	while true; do LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./multibot run; done
 

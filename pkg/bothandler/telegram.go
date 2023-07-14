@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/angch/discordbot/pkg/engineersmy"
+	"github.com/angch/multibot/pkg/engineersmy"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
