@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/angch/discordbot/cmd"
-	_ "github.com/angch/discordbot/pkg/spacetraders"
+	"github.com/angch/multibot/cmd"
+	_ "github.com/angch/multibot/pkg/spacetraders"
 )
 
 func main() {

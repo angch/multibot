@@ -22,7 +22,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/angch/discordbot/pkg/bothandler"
+	"github.com/angch/multibot/pkg/bothandler"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )

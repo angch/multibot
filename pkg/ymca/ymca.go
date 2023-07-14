@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"strings"
 
-	"github.com/angch/discordbot/pkg/bothandler"
+	"github.com/angch/multibot/pkg/bothandler"
 )
 
 var triggers = []string{

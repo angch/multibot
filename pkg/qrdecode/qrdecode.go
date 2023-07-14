@@ -5,17 +5,17 @@ import (
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
-	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/liyue201/goqr"
 
-	"github.com/angch/discordbot/pkg/bothandler"
+	"github.com/angch/multibot/pkg/bothandler"
 )
 
 func QrdecodeHandler(filename string, request bothandler.Request) string {
-	imgdata, err := ioutil.ReadFile(filename)
+	imgdata, err := os.ReadFile(filename)
 	if err != nil {
 		log.Println(err)
 		return ""

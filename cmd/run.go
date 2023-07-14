@@ -24,7 +24,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/angch/discordbot/pkg/bothandler"
+	"github.com/angch/multibot/pkg/bothandler"
 	"github.com/spf13/cobra"
 	"gopkg.in/irc.v3"
 )

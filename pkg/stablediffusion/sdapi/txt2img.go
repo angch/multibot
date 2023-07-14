@@ -257,4 +257,5 @@ var samplers = map[string]int{
 
 func (p *Txt2ImgParameters) SetSampler(sampler string) {
 	p.SamplerIndex = sampler
+	_ = samplers
 }

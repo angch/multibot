@@ -3,11 +3,11 @@ package stoic
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 
-	"github.com/angch/discordbot/pkg/bothandler"
+	"github.com/angch/multibot/pkg/bothandler"
 )
 
 type StoicResponse struct {
@@ -40,7 +40,7 @@ func GetMessage() string {
 	var respBody StoicResponse
 
 	// This is when you don't want a stream, so you have a copy you can debug
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Println(err)
 	}

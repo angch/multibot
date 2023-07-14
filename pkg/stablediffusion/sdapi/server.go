@@ -39,9 +39,9 @@ var negativePromptsArray = []string{
 	"(deformed)",
 	"(poorly drawn)",
 	"(extra limbs)",
-	"boring",
+	// "boring",
 	"sketch",
-	"lackluster",
+	// "lackluster",
 	"signature",
 	"letters",
 	"watermark",
@@ -50,7 +50,7 @@ var negativePromptsArray = []string{
 	"mutated",
 	"artifacts",
 	"bad art",
-	"gross",
+	// "gross",
 	"poor quality",
 	"low quality",
 }
@@ -79,7 +79,7 @@ func (s *Server) Txt2Img(prompt string) ([]byte, error) {
 	// 	p.Prompt = p.Prompt + ", " + enhancedPrompt
 	// }
 	p.NegativePrompt = s.NegativePrompt
-	p.SetSampler("DDIM")
+	p.SetSampler("DPM++ SDE Karras")
 
 	u := s.URL.String()
 	u += "/sdapi/v1/txt2img"

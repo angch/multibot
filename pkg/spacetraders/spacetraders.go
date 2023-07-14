@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/angch/discordbot/pkg/bothandler"
-	"github.com/angch/discordbot/pkg/engineersmy"
+	"github.com/angch/multibot/pkg/bothandler"
+	"github.com/angch/multibot/pkg/engineersmy"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
