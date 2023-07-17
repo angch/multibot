@@ -26,7 +26,7 @@ import (
 	// _ "github.com/angch/multibot/pkg/ocr"
 	_ "github.com/angch/multibot/pkg/qrdecode"
 
-	_ "github.com/angch/multibot/pkg/spacetraders"
+//	_ "github.com/angch/multibot/pkg/spacetraders"
 	_ "github.com/angch/multibot/pkg/stablediffusion"
 
 	// _ "github.com/angch/multibot/pkg/stoic"

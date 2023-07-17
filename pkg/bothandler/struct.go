@@ -8,7 +8,7 @@ import (
 	"github.com/flytam/filenamify"
 )
 
-// We could use discordbot's handler system, but we have own wrappers here to make
+// We could use multibot's handler system, but we have own wrappers here to make
 // multiplatform bots work.
 
 type Request struct {

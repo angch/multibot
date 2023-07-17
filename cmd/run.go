@@ -32,8 +32,8 @@ import (
 // runCmd represents the run command
 var runCmd = &cobra.Command{
 	Use:   "run",
-	Short: "Run the discordbot",
-	Long:  `Run the discordbot`,
+	Short: "Run the multibot",
+	Long:  `Run the multibot`,
 	Run: func(cmd *cobra.Command, args []string) {
 		sc := make(chan os.Signal, 1)
 
