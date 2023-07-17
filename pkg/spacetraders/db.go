@@ -37,7 +37,7 @@ func load() {
 	gormdb.Find(&ca)
 	for _, c := range ca {
 		ag := &Agent{}
-		gormdb.First(ag, "symbol = ?", c.AgentSymbol)
+		gormdb.First(ag, "agent = ?", c.AgentSymbol)
 		globalState[PlatformChannel{c.Platform, c.Channel}] = ag
 	}
 }

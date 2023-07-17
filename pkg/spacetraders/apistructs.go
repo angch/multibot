@@ -1,22 +1,31 @@
 package spacetraders
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type RegisterAgentRequest struct {
-	Symbol  string `json:"username"`
+	Symbol  string `json:"symbol"`
 	Faction string `json:"faction"`
 }
 
 type RegisterAgentResponse struct {
-	Data RegisterAgentResponseData `json:"data"`
+	Data  *RegisterAgentResponseData `json:"data"`
+	Error *ErrorResponse             `json:"error,omitempty"`
+}
+
+type ErrorResponse struct {
+	Message string      `json:"message"`
+	Code    json.Number `json:"code"`
 }
 
 type RegisterAgentResponseData struct {
-	Token    string        `json:"token"`
-	Agent    *AgentData    `json:"agent"`
-	Contract *ContractData `json:"contract"`
-	Faction  *FactionData  `json:"faction"`
-	Ship     *ShipData     `json:"ship"`
+	Token    string        `json:"token,omitempty"`
+	Agent    *AgentData    `json:"agent,omitempty"`
+	Contract *ContractData `json:"contract,omitempty"`
+	Faction  *FactionData  `json:"faction,omitempty"`
+	Ship     *ShipData     `json:"ship,omitempty"`
 }
 
 type AgentData struct {
