@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/angch/multibot/pkg/bothandler"
 	"github.com/angch/multibot/pkg/engineersmy"
-	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -33,7 +33,7 @@ type ChannelAgents struct {
 
 type Agent struct {
 	gorm.Model
-	Symbol    string `gorm:"uniqueIndex"`
+	Agent     string `gorm:"uniqueIndex"`
 	Faction   string
 	AuthToken string
 }
@@ -58,12 +58,16 @@ var lock = sync.Mutex{}
 var activeDev = true
 
 type SpaceTraders struct {
-	Db   *gorm.DB
-	Rand *rand.Rand
+	GormDB     *gorm.DB
+	Rand       *rand.Rand
+	HttpClient http.Client
 }
 
 var this = SpaceTraders{
 	Rand: rand.New(rand.NewSource(time.Now().UnixNano())),
+	HttpClient: http.Client{
+		Timeout: time.Second * 10,
+	},
 }
 
 func init() {
@@ -73,35 +77,6 @@ func init() {
 	// Singleton pattern, to fit in with the rest of the bot architecture
 	bothandler.RegisterCatchallHandler(SpaceTradersHandler)
 	load()
-}
-
-const savefile string = "spacetraders.sqlite"
-
-func load() {
-	lock.Lock()
-	defer lock.Unlock()
-
-	db, err := gorm.Open(sqlite.Open(savefile), &gorm.Config{})
-	if err != nil {
-		log.Fatalf("failed to connect database: %v", err)
-	}
-	db.AutoMigrate(&ChannelAgents{}, &Agent{})
-	this.Db = db
-
-	// FIXME: slurp everything into globalState
-	ca := make([]ChannelAgents, 0)
-	db.Find(&ca)
-	for _, c := range ca {
-		ag := &Agent{}
-		db.First(ag, "symbol = ?", c.AgentSymbol)
-		globalState[PlatformChannel{c.Platform, c.Channel}] = ag
-	}
-}
-
-func save() {
-	lock.Lock()
-	// FIXME: dump everything from globalState into spacetraders.sqlite
-	defer lock.Unlock()
 }
 
 func isValidPlatformChannel(platform, channel string) bool {
@@ -115,16 +90,6 @@ func isValidPlatformChannel(platform, channel string) bool {
 	default:
 		return false
 	}
-}
-
-func removeEmptyStrings(words []string) []string {
-	var ret []string
-	for _, w := range words {
-		if w != "" {
-			ret = append(ret, w)
-		}
-	}
-	return ret
 }
 
 func SpaceTradersHandler(request bothandler.Request) string {
@@ -155,12 +120,37 @@ func SpaceTradersHandler(request bothandler.Request) string {
 		return fmt.Sprintf("%+v", agentState)
 	case "init":
 		if agentState != nil {
-			return "This agent is already initialized as" + agentState.Symbol
+			return "This agent is already initialized as" + agentState.Agent
 		}
-		if len(words) < 3 {
-			return "Need a callsign and faction"
+		if len(words) < 2 {
+			return "Need a callsign (faction is always COSMIC)"
 		}
-		return fmt.Sprintf("Registering callsign %s faction %s", words[1], words[2])
+		req := RegisterAgentRequest{
+			Symbol:  words[1],
+			Faction: "COSMIC",
+		}
+		resp := this.RegisterAgent(req)
+		if resp == nil {
+			return "Failed to register agent"
+		}
+
+		data := resp.Data
+		agent := data.Agent
+		if agent == nil {
+			log.Println(agent)
+		}
+		faction := data.Faction
+		if faction == nil {
+			log.Println(faction)
+		}
+		agentState = &Agent{
+			Agent:     agent.Symbol,
+			Faction:   faction.Symbol,
+			AuthToken: data.Token,
+		}
+
+		log.Printf("%+v\n", resp)
+		return fmt.Sprintf("Registering callsign %s faction %s", words[1], "COSMIC")
 	case "agent":
 		return "agent detaisl is work in progress"
 	default:
