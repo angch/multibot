@@ -1,6 +1,7 @@
 package spacetraders
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math/rand"
@@ -38,10 +39,10 @@ type Agent struct {
 	AuthToken string
 }
 
-type AgentState struct {
-	Systems map[string]System
-	Ships   map[string]Ship
-}
+// type AgentState struct {
+// 	Systems map[string]System
+// 	Ships   map[string]Ship
+// }
 
 type Ship struct {
 	LastUpdate time.Time
@@ -92,6 +93,47 @@ func isValidPlatformChannel(platform, channel string) bool {
 	}
 }
 
+func (a *SpaceTraders) ProcessRegisterAgentResponse(ctx context.Context, pc PlatformChannel, resp *RegisterAgentResponse) {
+	data := resp.Data
+	agent := data.Agent
+	if agent == nil {
+		log.Println("No agent")
+		return
+	}
+	faction := data.Faction
+	if faction == nil {
+		log.Println("No faction")
+		return
+	}
+	agentState := &Agent{
+		Agent:     agent.Symbol,
+		Faction:   faction.Symbol,
+		AuthToken: data.Token,
+	}
+	gormdb := a.GormDB
+	err := gormdb.Save(agentState).Error
+	if err != nil {
+		log.Println(err)
+	}
+
+	channelagent := &ChannelAgents{
+		Platform:    pc.Platform,
+		Channel:     pc.Channel,
+		AgentSymbol: agent.Symbol,
+	}
+	err = gormdb.Save(channelagent).Error
+	if err != nil {
+		log.Println(err)
+	}
+
+	ag := &Agent{
+		Agent:     agent.Symbol,
+		Faction:   faction.Symbol,
+		AuthToken: data.Token,
+	}
+	globalState[PlatformChannel{pc.Platform, pc.Channel}] = ag
+}
+
 func SpaceTradersHandler(request bothandler.Request) string {
 	if activeDev {
 		log.Printf("pkg/spacetraders/SpaceTradersHandler %+v\n", request)
@@ -114,13 +156,15 @@ func SpaceTradersHandler(request bothandler.Request) string {
 	if !ok && words[0] != "init" {
 		return "This agent is not initialized"
 	}
+	ctx := context.Background()
 
 	switch words[0] {
 	case "status":
-		return fmt.Sprintf("%+v", agentState)
+		return fmt.Sprintf("This channel's agent is called %+v", agentState.Agent)
+		// return fmt.Sprintf("%+v", agentState)
 	case "init":
 		if agentState != nil {
-			return "This agent is already initialized as" + agentState.Agent
+			return "This agent is already initialized as " + agentState.Agent
 		}
 		if len(words) < 2 {
 			return "Need a callsign (faction is always COSMIC)"
@@ -129,27 +173,25 @@ func SpaceTradersHandler(request bothandler.Request) string {
 			Symbol:  words[1],
 			Faction: "COSMIC",
 		}
-		resp := this.RegisterAgent(req)
+		pc := PlatformChannel{
+			Platform: request.Platform,
+			Channel:  request.Channel,
+		}
+
+		// We split the api calls and the code to handle the response,
+		// in case for debugging we want to playback the response
+		// to fix things.
+		resp, err := this.RegisterAgent(ctx, pc, req)
+		if err != nil {
+			return fmt.Sprintf("Failed to register agent: %s", err)
+		}
 		if resp == nil {
 			return "Failed to register agent"
 		}
 
-		data := resp.Data
-		agent := data.Agent
-		if agent == nil {
-			log.Println(agent)
-		}
-		faction := data.Faction
-		if faction == nil {
-			log.Println(faction)
-		}
-		agentState = &Agent{
-			Agent:     agent.Symbol,
-			Faction:   faction.Symbol,
-			AuthToken: data.Token,
-		}
+		this.ProcessRegisterAgentResponse(ctx, pc, resp)
 
-		log.Printf("%+v\n", resp)
+		// log.Printf("%+v\n", resp)
 		return fmt.Sprintf("Registering callsign %s faction %s", words[1], "COSMIC")
 	case "agent":
 		return "agent detaisl is work in progress"

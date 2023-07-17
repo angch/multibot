@@ -16,8 +16,10 @@ type RequestLog struct {
 	Type string `gorm:"column:type" json:"type"`
 	URL  string `gorm:"column:url" json:"url"`
 
-	Data     string `gorm:"column:data" json:"data"`
-	Response string `gorm:"column:response" json:"response"`
+	Data string `gorm:"column:data" json:"data"`
+
+	ResponseStatusCode int    `gorm:"column:response_status_code" json:"response_status_code"`
+	Response           string `gorm:"column:response" json:"response"`
 }
 
 func (m *SpaceTraders) LogRequest(ctx context.Context, rl *RequestLog, r *http.Request) {
