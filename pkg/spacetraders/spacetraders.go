@@ -2,10 +2,12 @@ package spacetraders
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -25,20 +27,6 @@ type PlatformChannel struct {
 
 var globalState = map[PlatformChannel]*Agent{}
 
-type ChannelAgents struct {
-	gorm.Model
-	Platform    string
-	Channel     string
-	AgentSymbol string
-}
-
-type Agent struct {
-	gorm.Model
-	Agent     string `gorm:"uniqueIndex"`
-	Faction   string
-	AuthToken string
-}
-
 // type AgentState struct {
 // 	Systems map[string]System
 // 	Ships   map[string]Ship
@@ -55,13 +43,20 @@ type System struct {
 type Waypoint struct {
 }
 
-var lock = sync.Mutex{}
 var activeDev = true
 
 type SpaceTraders struct {
 	GormDB     *gorm.DB
 	Rand       *rand.Rand
 	HttpClient http.Client
+
+	ActiveDev bool
+
+	lock sync.RWMutex
+
+	KnownFactions map[string]Faction
+	KnownTraits   map[string]Trait
+	KnownAgents   map[string]Agent
 }
 
 var this = SpaceTraders{
@@ -69,6 +64,10 @@ var this = SpaceTraders{
 	HttpClient: http.Client{
 		Timeout: time.Second * 10,
 	},
+
+	KnownFactions: map[string]Faction{},
+	KnownTraits:   map[string]Trait{},
+	KnownAgents:   map[string]Agent{},
 }
 
 func init() {
@@ -93,47 +92,7 @@ func isValidPlatformChannel(platform, channel string) bool {
 	}
 }
 
-func (a *SpaceTraders) ProcessRegisterAgentResponse(ctx context.Context, pc PlatformChannel, resp *RegisterAgentResponse) {
-	data := resp.Data
-	agent := data.Agent
-	if agent == nil {
-		log.Println("No agent")
-		return
-	}
-	faction := data.Faction
-	if faction == nil {
-		log.Println("No faction")
-		return
-	}
-	agentState := &Agent{
-		Agent:     agent.Symbol,
-		Faction:   faction.Symbol,
-		AuthToken: data.Token,
-	}
-	gormdb := a.GormDB
-	err := gormdb.Save(agentState).Error
-	if err != nil {
-		log.Println(err)
-	}
-
-	channelagent := &ChannelAgents{
-		Platform:    pc.Platform,
-		Channel:     pc.Channel,
-		AgentSymbol: agent.Symbol,
-	}
-	err = gormdb.Save(channelagent).Error
-	if err != nil {
-		log.Println(err)
-	}
-
-	ag := &Agent{
-		Agent:     agent.Symbol,
-		Faction:   faction.Symbol,
-		AuthToken: data.Token,
-	}
-	globalState[PlatformChannel{pc.Platform, pc.Channel}] = ag
-}
-
+// SpaceTradersHandler is the catchall handler for SpaceTraders, to make it work within the bothandler framework
 func SpaceTradersHandler(request bothandler.Request) string {
 	if activeDev {
 		log.Printf("pkg/spacetraders/SpaceTradersHandler %+v\n", request)
@@ -194,7 +153,58 @@ func SpaceTradersHandler(request bothandler.Request) string {
 		// log.Printf("%+v\n", resp)
 		return fmt.Sprintf("Registering callsign %s faction %s", words[1], "COSMIC")
 	case "agent":
-		return "agent detaisl is work in progress"
+		// agentCode := agentState.Agent
+		// if len(words) < 2 {
+		// 	agentCode = strings.ToUpper(words[1])
+		// }
+		return agentState.Agent + " is in the faction " + agentState.Faction
+
+		// return "agent details is work in progress"
+	case "faction":
+		if len(words) < 2 {
+			return "Need id for faction"
+		}
+		factionCode := strings.ToUpper(words[1])
+
+		faction, ok := this.KnownFactions[factionCode]
+		if !ok {
+			return "No such faction " + factionCode
+		}
+		return faction.PrettyPrint()
+	case "replay":
+		if request.Platform == "readline" {
+			if len(words) < 2 {
+				return "Need id for replay"
+			}
+			gormdb := this.GormDB
+			requestLog := RequestLog{}
+			arg, err := strconv.Atoi(words[1])
+			if err != nil {
+				return "Need id for replay"
+			}
+			err = gormdb.Where("id = ?", arg).Find(&requestLog).Error
+			if err != nil || requestLog.ID == 0 {
+				return fmt.Sprintf("Failed to find request log: %d", arg)
+			}
+
+			// FIXME Yes, refac this.
+			switch requestLog.Type {
+			case "RegisterAgent":
+				registerAgentResponse := RegisterAgentResponse{}
+				json.Unmarshal([]byte(requestLog.Response), &registerAgentResponse)
+				if registerAgentResponse.Error != nil {
+					return fmt.Sprintf("Replaying RegisterAgent %d: error: %+v", arg, registerAgentResponse.Error)
+				}
+				this.ProcessRegisterAgentResponse(ctx, PlatformChannel{requestLog.Platform, requestLog.Channel}, &registerAgentResponse)
+				return fmt.Sprintf("Replaying RegisterAgent %d: %+v", arg, registerAgentResponse.Data)
+			default:
+				log.Println("Unknown type", requestLog.Type)
+			}
+
+			return fmt.Sprintf("Replaying %d: %+v", arg, requestLog)
+		} else {
+			return "Replay is only supported on readline"
+		}
 	default:
 		return ""
 	}
