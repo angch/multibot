@@ -2,6 +2,7 @@ package spacetraders
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"sort"
 	"strings"
@@ -20,7 +21,7 @@ func (a *SpaceTraders) ProcessRegisterAgentResponse(ctx context.Context, pc Plat
 		return
 	}
 
-	if true {
+	if false {
 		log.Printf("RegisterAgentResponse:\n Agent: %+v\nContract: %+v\nFaction: %+v\nShip: %+v\n", agent, data.Contract, faction, data.Ship)
 	}
 
@@ -86,4 +87,20 @@ func (a *SpaceTraders) ProcessRegisterAgentResponse(ctx context.Context, pc Plat
 	ag.Faction = faction.Symbol
 
 	globalState[PlatformChannel{pc.Platform, pc.Channel}] = ag
+
+	dbship := &Ship{}
+	s, err := json.Marshal(data.Ship)
+	if err != nil {
+		log.Println(err)
+	}
+	err = json.Unmarshal(s, dbship)
+	if err != nil {
+		log.Println(err)
+	}
+	dbship.Owner = agent.Symbol
+	// log.Printf("ship is %+v\n", data.Ship)
+	// log.Printf("s is %s\n", string(s))
+	// log.Printf("dbship is %v\n", dbship)
+
+	a.SetShip(*dbship)
 }

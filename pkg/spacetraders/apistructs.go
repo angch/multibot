@@ -134,65 +134,79 @@ type ShipMountData struct {
 	Deposits []string `json:"deposits,omitempty"`
 }
 
+type NavData struct {
+	SystemSymbol   string    `json:"systemSymbol"`
+	WaypointSymbol string    `json:"waypointSymbol"`
+	Route          RouteData `json:"route"`
+	Status         string    `json:"status"`
+	FlightMode     string    `json:"flightMode"`
+}
+
+type CrewData struct {
+	Current  int    `json:"current"`
+	Capacity int    `json:"capacity"`
+	Required int    `json:"required"`
+	Rotation string `json:"rotation"`
+	Morale   int    `json:"morale"`
+	Wages    int    `json:"wages"`
+}
+
+type FuelData struct {
+	Current  int `json:"current"`
+	Capacity int `json:"capacity"`
+	Consumed struct {
+		Amount    int       `json:"amount"`
+		Timestamp time.Time `json:"timestamp"`
+	} `json:"consumed"`
+}
+
+type ShipReactorData struct {
+	Symbol       string `json:"symbol"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	Condition    int    `json:"condition"`
+	PowerOutput  int    `json:"powerOutput"`
+	Requirements struct {
+		Crew int `json:"crew"`
+	} `json:"requirements"`
+}
+
+type ShipEngineData struct {
+	Symbol       string `json:"symbol"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	Condition    int    `json:"condition"`
+	Speed        int    `json:"speed"`
+	Requirements struct {
+		Power int `json:"power"`
+		Crew  int `json:"crew"`
+	} `json:"requirements"`
+}
+
+type ShipRegistrationData struct {
+	Name          string `json:"name"`
+	FactionSymbol string `json:"factionSymbol"`
+	Role          string `json:"role"`
+}
+
+type ShipCargoData struct {
+	Capacity  int             `json:"capacity"`
+	Units     int             `json:"units"`
+	Inventory []InventoryData `json:"inventory"`
+}
+
 type ShipData struct {
-	Symbol string `json:"symbol"`
-	Nav    struct {
-		SystemSymbol   string    `json:"systemSymbol"`
-		WaypointSymbol string    `json:"waypointSymbol"`
-		Route          RouteData `json:"route"`
-		Status         string    `json:"status"`
-		FlightMode     string    `json:"flightMode"`
-	} `json:"nav"`
-	Crew struct {
-		Current  int    `json:"current"`
-		Capacity int    `json:"capacity"`
-		Required int    `json:"required"`
-		Rotation string `json:"rotation"`
-		Morale   int    `json:"morale"`
-		Wages    int    `json:"wages"`
-	} `json:"crew"`
-	Fuel struct {
-		Current  int `json:"current"`
-		Capacity int `json:"capacity"`
-		Consumed struct {
-			Amount    int       `json:"amount"`
-			Timestamp time.Time `json:"timestamp"`
-		} `json:"consumed"`
-	} `json:"fuel"`
-	Frame   ShipFrameData `json:"frame"`
-	Reactor struct {
-		Symbol       string `json:"symbol"`
-		Name         string `json:"name"`
-		Description  string `json:"description"`
-		Condition    int    `json:"condition"`
-		PowerOutput  int    `json:"powerOutput"`
-		Requirements struct {
-			Crew int `json:"crew"`
-		} `json:"requirements"`
-	} `json:"reactor"`
-	Engine struct {
-		Symbol       string `json:"symbol"`
-		Name         string `json:"name"`
-		Description  string `json:"description"`
-		Condition    int    `json:"condition"`
-		Speed        int    `json:"speed"`
-		Requirements struct {
-			Power int `json:"power"`
-			Crew  int `json:"crew"`
-		} `json:"requirements"`
-	} `json:"engine"`
-	Modules      []ShipModuleData `json:"modules"`
-	Mounts       []ShipMountData  `json:"mounts"`
-	Registration struct {
-		Name          string `json:"name"`
-		FactionSymbol string `json:"factionSymbol"`
-		Role          string `json:"role"`
-	} `json:"registration"`
-	Cargo struct {
-		Capacity  int             `json:"capacity"`
-		Units     int             `json:"units"`
-		Inventory []InventoryData `json:"inventory"`
-	} `json:"cargo"`
+	Symbol       string               `json:"symbol"`
+	Nav          NavData              `json:"nav"`
+	Crew         CrewData             `json:"crew"`
+	Fuel         FuelData             `json:"fuel"`
+	Frame        ShipFrameData        `json:"frame"`
+	Reactor      ShipReactorData      `json:"reactor"`
+	Engine       ShipEngineData       `json:"engine"`
+	Modules      []ShipModuleData     `json:"modules"`
+	Mounts       []ShipMountData      `json:"mounts"`
+	Registration ShipRegistrationData `json:"registration"`
+	Cargo        ShipCargoData        `json:"cargo"`
 }
 
 type InventoryData any

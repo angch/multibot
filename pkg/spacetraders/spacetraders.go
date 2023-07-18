@@ -32,11 +32,6 @@ var globalState = map[PlatformChannel]*Agent{}
 // 	Ships   map[string]Ship
 // }
 
-type Ship struct {
-	LastUpdate time.Time
-	Fuel       int
-	InOrbit    int
-}
 type System struct {
 	LastUpdate time.Time
 }
@@ -57,6 +52,8 @@ type SpaceTraders struct {
 	KnownFactions map[string]Faction
 	KnownTraits   map[string]Trait
 	KnownAgents   map[string]Agent
+	KnownShips    map[string]Ship
+	AgentShips    map[string]map[string]bool
 }
 
 var this = SpaceTraders{
@@ -68,6 +65,8 @@ var this = SpaceTraders{
 	KnownFactions: map[string]Faction{},
 	KnownTraits:   map[string]Trait{},
 	KnownAgents:   map[string]Agent{},
+	KnownShips:    map[string]Ship{},
+	AgentShips:    map[string]map[string]bool{},
 }
 
 func init() {
@@ -171,6 +170,25 @@ func SpaceTradersHandler(request bothandler.Request) string {
 			return "No such faction " + factionCode
 		}
 		return faction.PrettyPrint()
+	case "ship":
+		if len(words) < 2 {
+			a := []string{}
+			this.lock.RLock()
+			for k := range this.AgentShips[agentState.Agent] {
+				a = append(a, " "+k)
+			}
+			this.lock.RUnlock()
+			return "Ships:\n" + strings.Join(a, "\n")
+			// return "Need id for ship"
+		}
+		shipCode := strings.ToUpper(words[1])
+
+		ship, ok := this.KnownShips[shipCode]
+		if !ok {
+			return "No such ship " + shipCode
+
+		}
+		return ship.PrettyPrint()
 	case "replay":
 		if request.Platform == "readline" {
 			if len(words) < 2 {
