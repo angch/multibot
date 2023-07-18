@@ -1,6 +1,7 @@
 package spacetraders
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -49,6 +50,44 @@ type Faction struct {
 	IsRecruiting bool    `gorm:"column:is_recruiting"`
 }
 
+type Ship struct {
+	gorm.Model
+	Ship  string `gorm:"uniqueIndex" json:"symbol"`
+	Owner string `gorm:"column:owner" json:"owner"`
+
+	Data string `gorm:"column:data;type:text" json:"-"`
+
+	Nav          NavData              `gorm:"-" json:"nav"`
+	Crew         CrewData             `gorm:"-" json:"crew"`
+	Fuel         FuelData             `gorm:"-" json:"fuel"`
+	Frame        ShipFrameData        `gorm:"-" json:"frame"`
+	Reactor      ShipReactorData      `gorm:"-" json:"reactor"`
+	Engine       ShipEngineData       `gorm:"-" json:"engine"`
+	Modules      []ShipModuleData     `gorm:"-" json:"modules"`
+	Mounts       []ShipMountData      `gorm:"-" json:"mounts"`
+	Registration ShipRegistrationData `gorm:"-" json:"registration"`
+	Cargo        ShipCargoData        `gorm:"-" json:"cargo"`
+}
+
+func (s *Ship) Fix(a *SpaceTraders) {
+	if s.Data != "" {
+		d := s.Data
+		o := s.Owner
+		err := json.Unmarshal([]byte(d), s)
+		if err != nil {
+			log.Println(err)
+		}
+		s.Data = d
+		s.Owner = o
+	} else {
+		d, err := json.Marshal(s)
+		if err != nil {
+			log.Println(err)
+		}
+		s.Data = string(d)
+	}
+}
+
 func (f *Faction) Fix(a *SpaceTraders) {
 	f.Traits = make([]Trait, 0)
 	for _, v := range strings.Split(f.TraitsString, ",") {
@@ -78,13 +117,20 @@ func (f *Faction) PrettyPrint() string {
 	return a
 }
 
+func (s *Ship) PrettyPrint() string {
+	// a := fmt.Sprintf("%s\n  Nav: %+v\n Crew: %+v\n Fuel: %+v\n Frame: %+v\n Reactor: %+v\n Engine: %+v\n Modules: %+v\n Mounts: %+v\n Registration: %+v\n Cargo: %+v\n",
+	// s.Ship, s.Nav, s.Crew, s.Fuel, s.Frame, s.Reactor, s.Engine, s.Modules, s.Mounts, s.Registration, s.Cargo)
+	a := fmt.Sprintf("%s\n  Nav: %+v\n Crew: %+v\n Fuel: %+v\n Registration: %+v\n Cargo: %+v\n",
+		s.Ship, s.Nav, s.Crew, s.Fuel, s.Registration, s.Cargo)
+	return a
+}
+
 const savefile string = "spacetraders.sqlite"
 
 var lock sync.Mutex
 
 func load() {
 	lock.Lock()
-	defer lock.Unlock()
 
 	gormdb, err := gorm.Open(sqlite.Open(savefile), &defaultGormConfig)
 	if err != nil {
@@ -96,6 +142,7 @@ func load() {
 		&RequestLog{},
 		&Trait{},
 		&Faction{},
+		&Ship{},
 	)
 	this.GormDB = gormdb
 
@@ -107,6 +154,8 @@ func load() {
 		gormdb.First(ag, "agent = ?", c.AgentSymbol)
 		globalState[PlatformChannel{c.Platform, c.Channel}] = ag
 	}
+	lock.Unlock()
+
 	this.LoadKnown()
 }
 
@@ -166,17 +215,76 @@ func (a *SpaceTraders) SetFaction(faction Faction) {
 	a.lock.Unlock()
 }
 
+func (a *SpaceTraders) SetShip(ship Ship) {
+	gormdb := a.GormDB
+	ship.Fix(a)
+	log.Printf("SetShip owner %s\n", ship.Owner)
+
+	a.lock.RLock()
+	knownShip, ok := a.KnownShips[ship.Ship]
+	a.lock.RUnlock()
+	if !ok {
+		knownShip = ship
+	} else {
+		knownShip.Crew = ship.Crew
+		knownShip.Fuel = ship.Fuel
+		knownShip.Frame = ship.Frame
+		knownShip.Reactor = ship.Reactor
+		knownShip.Engine = ship.Engine
+		knownShip.Modules = ship.Modules
+		knownShip.Mounts = ship.Mounts
+		knownShip.Registration = ship.Registration
+		knownShip.Cargo = ship.Cargo
+		knownShip.Data = ship.Data
+		knownShip.Owner = ship.Owner
+	}
+	err := gormdb.Debug().Save(&knownShip).Error
+	if err != nil {
+		log.Println(err)
+	}
+	a.lock.Lock()
+	a.KnownShips[ship.Ship] = knownShip
+	ships, ok := a.AgentShips[ship.Owner]
+	if !ok {
+		a.AgentShips[ship.Owner] = make(map[string]bool)
+		ships = a.AgentShips[ship.Owner]
+	}
+	ships[ship.Ship] = true
+	a.lock.Unlock()
+}
+
 func (a *SpaceTraders) LoadKnown() {
 	traits := make([]Trait, 0)
-	factions := make([]Faction, 0)
-
-	a.GormDB.Find(&traits)   // FIXME
-	a.GormDB.Find(&factions) // FIXME
+	a.GormDB.Find(&traits) // FIXME
 	for _, v := range traits {
+		a.lock.Lock()
 		a.KnownTraits[v.Trait] = v
+		a.lock.Unlock()
 	}
+
+	factions := make([]Faction, 0)
+	a.GormDB.Find(&factions) // FIXME
+
 	for _, v := range factions {
 		v.Fix(a)
+		a.lock.Lock()
 		a.KnownFactions[v.Faction] = v
+		a.lock.Unlock()
+	}
+
+	ships := make([]Ship, 0)
+	a.GormDB.Find(&ships)
+	for _, v := range ships {
+		v.Fix(a)
+
+		a.lock.Lock()
+		a.KnownShips[v.Ship] = v
+		ships, ok := a.AgentShips[v.Owner]
+		if !ok {
+			a.AgentShips[v.Owner] = make(map[string]bool)
+			ships = a.AgentShips[v.Owner]
+		}
+		ships[v.Ship] = true
+		a.lock.Unlock()
 	}
 }
