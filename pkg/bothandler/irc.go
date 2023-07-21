@@ -34,6 +34,7 @@ func NewMessagePlatformFromIrc(serveraddr string, clientconfig *irc.ClientConfig
 	if err != nil {
 		return nil, err
 	}
+	log.Println("Connected to IRC on", serveraddr)
 	return &platform, nil
 }
 

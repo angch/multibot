@@ -71,7 +71,7 @@ var this = SpaceTraders{
 
 func init() {
 	if activeDev {
-		log.Println("pkg/spacetraders/init")
+		// log.Println("pkg/spacetraders/init")
 	}
 	// Singleton pattern, to fit in with the rest of the bot architecture
 	bothandler.RegisterCatchallHandler(SpaceTradersHandler)

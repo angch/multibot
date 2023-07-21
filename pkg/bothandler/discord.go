@@ -17,6 +17,7 @@ import (
 type DiscordMessagePlatform struct {
 	Session  *discordgo.Session
 	Channels map[string]string
+	Me       *discordgo.User
 }
 
 func NewMessagePlatformFromDiscord(discordtoken string) (*DiscordMessagePlatform, error) {
@@ -33,10 +34,17 @@ func NewMessagePlatformFromDiscord(discordtoken string) (*DiscordMessagePlatform
 		log.Println("error opening connection,", err)
 		return nil, err
 	}
+	me, err := dg.User("@me")
+	if err != nil {
+		log.Println(err)
+	} else {
+		log.Printf("Connected to Discord on account %s", me.Username)
+	}
 
 	return &DiscordMessagePlatform{
 		Session:  dg,
 		Channels: engineersmy.KnownDiscordChannels,
+		Me:       me,
 	}, nil
 }
 

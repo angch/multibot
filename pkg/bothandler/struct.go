@@ -14,8 +14,9 @@ import (
 type Request struct {
 	Content  string
 	Platform string
-	Channel  string
-	From     string
+	// ClientId string
+	Channel string
+	From    string
 }
 
 type MessageHandler func() string

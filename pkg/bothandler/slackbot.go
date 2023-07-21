@@ -18,8 +18,9 @@ type SlackMessagePlatform struct {
 	Client           *slack.Client
 	SocketModeClient *socketmode.Client
 	ChannelId        map[string]string
-	AuthResponse     *slack.AuthTestResponse
+	Me               *slack.AuthTestResponse
 	DefaultChannel   string
+	verbose          bool
 }
 
 func NewMessagePlatformFromSlack(slackbottoken, slackapptoken string) (*SlackMessagePlatform, error) {
@@ -29,7 +30,6 @@ func NewMessagePlatformFromSlack(slackbottoken, slackapptoken string) (*SlackMes
 	if !strings.HasPrefix(slackbottoken, "xoxb-") {
 		fmt.Fprintf(os.Stderr, "SLACK_BOT_TOKEN must have the prefix \"xoxb-\".")
 	}
-	log.SetFlags(log.Lshortfile | log.LstdFlags)
 
 	client := slack.New(
 		slackbottoken,
@@ -42,7 +42,10 @@ func NewMessagePlatformFromSlack(slackbottoken, slackapptoken string) (*SlackMes
 		log.Println(err)
 		return nil, err
 	}
-	log.Printf("AuthResponse: %+v\n", authresp)
+	/*
+		{URL:https://engineersmy.slack.com/ Team:EngineersMY User:multibot TeamID:T5NBXXXXX UserID:U0XX2P6UXXX EnterpriseID: BotID:B0XXX012XJP}
+	*/
+	//log.Printf("AuthResponse: %+v\n", authresp)
 
 	socketmodeclient := socketmode.New(
 		client,
@@ -71,7 +74,7 @@ func NewMessagePlatformFromSlack(slackbottoken, slackapptoken string) (*SlackMes
 		Client:           client,
 		SocketModeClient: socketmodeclient,
 		ChannelId:        channelid,
-		AuthResponse:     authresp,
+		Me:               authresp,
 	}, nil
 }
 
@@ -83,11 +86,15 @@ func (s *SlackMessagePlatform) ProcessMessages() {
 			// log.Printf("Ping events %+v\n", evt)
 			switch evt.Type {
 			case socketmode.EventTypeConnecting:
-				log.Println("Connecting to Slack with Socket Mode...")
+				if s.verbose {
+					log.Println("Connecting to Slack with Socket Mode...")
+				}
 			case socketmode.EventTypeConnectionError:
-				log.Println("Connection failed. Retrying later...")
+				if s.verbose {
+					log.Println("Connection failed. Retrying later...")
+				}
 			case socketmode.EventTypeConnected:
-				log.Println("Connected to Slack with Socket Mode.")
+				log.Println("Connected to Slack with Socket Mode on account", s.Me.User)
 			case socketmode.EventTypeEventsAPI:
 				eventsAPIEvent, ok := evt.Data.(slackevents.EventsAPIEvent)
 				if !ok {
@@ -112,7 +119,7 @@ func (s *SlackMessagePlatform) ProcessMessages() {
 					case *slackevents.MemberJoinedChannelEvent:
 						log.Printf("user %q joined to channel %q", ev.User, ev.Channel)
 					case *slackevents.MessageEvent:
-						if ev.BotID == s.AuthResponse.BotID {
+						if ev.BotID == s.Me.BotID {
 							continue eventloop
 						}
 						// log.Println("xxx", ev.Text)

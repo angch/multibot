@@ -1,6 +1,7 @@
 package bothandler
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -64,7 +65,7 @@ outer:
 		h, ok := Handlers[content]
 		if ok {
 			response := h()
-			log.Println("Bot says", response)
+			fmt.Println("Bot says", response)
 		}
 
 		sliced_content := strings.SplitN(content, " ", 2)
@@ -76,7 +77,7 @@ outer:
 			if ok {
 				response := ih(Request{actual_content, "readline", "", ""})
 				if response != "" {
-					log.Println("Bot says", response)
+					fmt.Println("Bot says", response)
 				}
 			}
 		}
@@ -85,7 +86,7 @@ outer:
 		for _, v := range CatchallHandlers {
 			r := v(Request{content, "readline", "", ""})
 			if r != "" {
-				log.Println(">", r)
+				fmt.Println(">", r)
 			}
 		}
 

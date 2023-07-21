@@ -2,7 +2,7 @@
 
 build:
 	cd lib/uwu && cargo build --release
-	go build .
+	go build -trimpath .
 
 prerequisites:
 	sudo apt install -y cargo
