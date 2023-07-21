@@ -1,6 +1,6 @@
-# discordbot
+# multibot
 
-A multiplatform Bot on Discord, Slack, Telegram and IRC) for fun and play. "discordbot" is a legacy name.
+A multiplatform Bot on Discord, Slack, Telegram and IRC) for fun and play. It was called "discordbot" before.
 
 ## Stuff to try
 
@@ -21,6 +21,8 @@ A multiplatform Bot on Discord, Slack, Telegram and IRC) for fun and play. "disc
 `!explainxkcd 356`
 
 `selamat pagi!`
+
+`!sd close up portrait of robot`
 
 ## Where to try
 
