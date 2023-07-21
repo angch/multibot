@@ -20,6 +20,7 @@ type TelegramMessagePlatform struct {
 	KnownUsers     map[string]tgbotapi.User
 	KnownUsersLock sync.RWMutex
 	DefaultChannel string
+	// Me             *tgbotapi.User // Superflous, get it from Client.Self
 }
 
 func NewMessagePlatformFromTelegram(telegrambottoken string) (*TelegramMessagePlatform, error) {
@@ -27,7 +28,7 @@ func NewMessagePlatformFromTelegram(telegrambottoken string) (*TelegramMessagePl
 	if err != nil {
 		log.Panic(err)
 	}
-	log.Printf("Authorized on account %s", bot.Self.UserName)
+	log.Printf("Connected to Telegram on account %s", bot.Self.UserName)
 
 	return &TelegramMessagePlatform{
 		Client:     bot,

@@ -43,7 +43,7 @@ var runCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println("Discord Bot is now running.")
+			// log.Println("Discord Bot is now running.")
 			bothandler.RegisterMessagePlatform(n)
 			go n.ProcessMessages()
 		}
@@ -63,7 +63,7 @@ var runCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 			s.DefaultChannel = "random"
-			log.Println("Slack bot is now running.")
+			// log.Println("Slack bot is now running.")
 			bothandler.RegisterMessagePlatform(s)
 			go s.ProcessMessages()
 		}
@@ -75,7 +75,7 @@ var runCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 			s.DefaultChannel = "offtopic"
-			log.Println("Telegram bot is now running.")
+			// log.Println("Telegram bot is now running.")
 			bothandler.RegisterMessagePlatform(s)
 			go s.ProcessMessages()
 		}
@@ -98,7 +98,7 @@ var runCmd = &cobra.Command{
 				}
 				s.DefaultChannel = strings.TrimPrefix(ircParams.Path, "/")
 
-				log.Println("Irc bot is now running.")
+				// log.Println("Irc bot is now running.")
 				bothandler.RegisterMessagePlatform(s)
 				go s.ProcessMessages()
 			}
