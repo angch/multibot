@@ -305,7 +305,7 @@ func (s *SlackMessagePlatform) ChannelMessageSend(channel, message string) error
 	channelId, ok := s.ChannelId[channel]
 	if !ok {
 		log.Println("Unknown channel", channel)
-		return fmt.Errorf("Unknown channel %s", channel)
+		return fmt.Errorf("unknown channel %s", channel)
 	}
 	log.Println("sending", message, "to", channelId)
 	// m := sSock.NewOutgoingMessage(message, channelId)

@@ -232,7 +232,7 @@ func (s *DiscordMessagePlatform) ChannelMessageSend(channel, message string) err
 	channelId, ok := engineersmy.KnownDiscordChannels[channel]
 	if !ok {
 		log.Println("Unknown channel", channel)
-		return fmt.Errorf("Unknown channel %s", channel)
+		return fmt.Errorf("unknown channel %s", channel)
 	}
 	_, err := s.Session.ChannelMessageSend(channelId, message)
 
@@ -241,7 +241,7 @@ func (s *DiscordMessagePlatform) ChannelMessageSend(channel, message string) err
 
 func botDownload(attachment *discordgo.MessageAttachment, localFilename string) error {
 	if attachment == nil {
-		return fmt.Errorf("No attachment")
+		return fmt.Errorf("no attachment")
 	}
 
 	downloadUrl := attachment.URL
