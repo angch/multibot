@@ -248,7 +248,7 @@ func (s *TelegramMessagePlatform) ChannelMessageSend(channel, message string) er
 	channelId, ok := engineersmy.KnownTelegramChannels[channel]
 	if !ok {
 		log.Println("Unknown channel", channel)
-		return fmt.Errorf("Unknown channel %s", channel)
+		return fmt.Errorf("unknown channel %s", channel)
 	}
 	msg := tgbotapi.NewMessage(int64(channelId), message)
 	_, err := s.Client.Send(msg)
@@ -266,7 +266,7 @@ func (s *TelegramMessagePlatform) ChannelMessageSilentSend(channel, message stri
 	channelId, ok := engineersmy.KnownTelegramChannels[channel]
 	if !ok {
 		log.Println("Unknown channel", channel)
-		return fmt.Errorf("Unknown channel %s", channel)
+		return fmt.Errorf("unknown channel %s", channel)
 	}
 	msg := tgbotapi.NewMessage(int64(channelId), message)
 	msg.DisableNotification = true
