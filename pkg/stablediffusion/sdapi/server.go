@@ -30,7 +30,10 @@ func NewServer(host string) *Server {
 	s.NegativePrompt = strings.Join(negativePromptsArray, ", ")
 	s.EnhancedPrompt = strings.Join(enhancedPrompts, ", ")
 	s.Models = make(map[string]Model, 0)
-	s.Config, _ = s.GetConfig()
+
+	go func() {
+		s.Config, _ = s.GetConfig()
+	}()
 	return &s
 }
 
