@@ -17,8 +17,6 @@ import (
 var posts map[string]ApodPost
 
 func init() {
-	bothandler.RegisterPlatformRegisteration(AddMessagePlatform)
-
 	// go Tick()
 
 	posts = make(map[string]ApodPost)
@@ -39,18 +37,15 @@ func init() {
 	go Apod()
 }
 
-var MessagePlatforms = []bothandler.MessagePlatform{}
-
-func AddMessagePlatform(m bothandler.MessagePlatform) {
-	// log.Printf("Registering module apod in %+v\n", m)
-
-	MessagePlatforms = append(MessagePlatforms, m)
+func GetMessagePlatforms() []bothandler.MessagePlatform {
+	return bothandler.ActiveMessagePlatforms
 }
 
 // For testing.
 func Tick() {
 	for {
 		time.Sleep(10 * time.Second)
+		MessagePlatforms := GetMessagePlatforms()
 		for _, v := range MessagePlatforms {
 			v.Send("tick")
 		}
@@ -172,6 +167,7 @@ func Apod() {
 			log.Printf("%+v\n", p)
 
 			text := fmt.Sprintf("%s %s", p.Text, p.ImageURL)
+			MessagePlatforms := GetMessagePlatforms()
 			for _, v := range MessagePlatforms {
 				v.SendWithOptions(text, bothandler.SendOptions{Silent: true})
 			}
