@@ -71,20 +71,7 @@ func RegisterImageHandler(h ImageHandler) {
 	ImageHandlers = append(ImageHandlers, h)
 }
 
-// Yes, weird. All the modules register themselves,
-// Then all the platforms (discord, telegram, slack) calls these
-// to tell the modules these platforms are available for them
-// to call asynchronously.
-// We need these to get the moduls to run themselves asychronously
-// apart from the main messaging platform event loop
-func RegisterPlatformRegisteration(h AddMessagePlatform) {
-	AddMessagePlatforms = append(AddMessagePlatforms, h)
-}
-
 func RegisterMessagePlatform(m MessagePlatform) {
-	for _, v := range AddMessagePlatforms {
-		v(m)
-	}
 	ActiveMessagePlatforms = append(ActiveMessagePlatforms, m)
 }
 
