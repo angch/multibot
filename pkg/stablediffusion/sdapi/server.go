@@ -71,7 +71,7 @@ var enhancedPrompts = []string{
 
 // Prompt2PosNeg decomposes a text input into positive and negative prompts
 func (s *Server) Prompt2PosNeg(input string) (string, string) {
-	left, right, ok := strings.Cut("--", input)
+	left, right, ok := strings.Cut(input, "--")
 	if ok {
 		return left, right
 	}
