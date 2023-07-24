@@ -69,10 +69,18 @@ var enhancedPrompts = []string{
 	"(8k)",
 }
 
+// Prompt2PosNeg decomposes a text input into positive and negative prompts
+func (s *Server) Prompt2PosNeg(input string) (string, string) {
+	left, right, ok := strings.Cut("--", input)
+	if ok {
+		return left, right
+	}
+	return input, s.NegativePrompt
+}
+
 func (s *Server) Txt2Img(prompt string) ([]byte, error) {
 	// quick hack
 	p := NewTxt2ImgParameters()
-	p.Prompt = prompt
 	p.RestoreFaces = true
 	p.Width = 768
 	p.Height = 768
@@ -81,7 +89,9 @@ func (s *Server) Txt2Img(prompt string) ([]byte, error) {
 	// if len(prompt) < 20 {
 	// 	p.Prompt = p.Prompt + ", " + enhancedPrompt
 	// }
-	p.NegativePrompt = s.NegativePrompt
+	pos, neg := s.Prompt2PosNeg(prompt)
+	p.Prompt = pos
+	p.NegativePrompt = neg
 	p.SetSampler("DPM++ SDE Karras")
 
 	u := s.URL.String()
