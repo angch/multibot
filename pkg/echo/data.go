@@ -40,4 +40,10 @@ var fragments = []fragment{
 	{"i need to", "Do it!", []string{}},
 	{"i should", "Just Do It!", []string{}},
 	{"caffeine", "Yes, we know.", []string{"bad", "tired", "delay", "dopamine", "addict", "borrow"}},
+
+	// Inspired by https://www.reddit.com/r/sysadmin/comments/15zkt6k/is_there_some_cultural_thing_im_missing_with/
+	{"can i ask", "https://dontasktoask.com/", []string{}},
+	{"around?", "https://dontasktoask.com/", []string{"any", "experts", "sifu"}},
+
+	{"can i advice", "No!", []string{"something", "u"}},
 }
