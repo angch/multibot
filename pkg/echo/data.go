@@ -1,20 +1,18 @@
 package echo
 
 import (
-	"strings"
-
 	"github.com/angch/multibot/pkg/bothandler"
 )
 
 func init() {
 	bothandler.RegisterCatchallHandler(EchoHandler)
 
-	for k, v := range fragments {
-		vl := strings.ToLower(v.From)
-		if vl != v.From {
-			fragments[k].From = vl
-		}
-	}
+	// for k, v := range fragments {
+	// 	vl := strings.ToLower(v.From)
+	// 	if vl != v.From {
+	// 		fragments[k].From = vl
+	// 	}
+	// }
 }
 
 var echos = map[string]string{
@@ -43,7 +41,9 @@ var fragments = []fragment{
 
 	// Inspired by https://www.reddit.com/r/sysadmin/comments/15zkt6k/is_there_some_cultural_thing_im_missing_with/
 	{"can i ask", "https://dontasktoask.com/", []string{}},
+	{"anyone can helps", "https://dontasktoask.com/", []string{}},
 	{"around?", "https://dontasktoask.com/", []string{"any", "experts", "sifu"}},
 
 	{"can i advice", "No!", []string{"something", "u"}},
+	{"AGI", "*Feel* the AGI!", []string{}},
 }
