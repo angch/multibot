@@ -19,7 +19,16 @@ func EchoHandler(request bothandler.Request) string {
 	}
 
 	for _, v := range fragments {
-		if strings.Contains(i, v.From) {
+		a := strings.ToLower(v.From)
+
+		c := false
+		if a == v.From { // All lower
+			c = strings.Contains(i, v.From)
+		} else {
+			c = strings.Contains(request.Content, v.From)
+		}
+
+		if c {
 			if len(v.ExtraGuards) > 0 {
 				count := 0
 				for _, g := range v.ExtraGuards {
