@@ -86,7 +86,7 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 		for _, v := range CatchallExtendedHandlers {
 			r := v(ExtendedMessage{Text: content})
 			if r != nil {
-				if r.Text != "" {
+				if r.Text != "" && r.Image == nil {
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, r.Text)
 					msg.ReplyToMessageID = update.Message.MessageID
 					_, err := s.Client.Send(msg)
@@ -101,6 +101,7 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 					}
 					msg := tgbotapi.NewPhotoUpload(update.Message.Chat.ID, photoFileBytes)
 					msg.ReplyToMessageID = update.Message.MessageID
+					msg.Caption = r.Text
 					_, err := s.Client.Send(msg)
 					if err != nil {
 						log.Println(err)

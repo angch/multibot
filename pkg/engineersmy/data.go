@@ -10,7 +10,7 @@ var KnownDiscordChannels = map[string]string{
 	"sandbox":      "846297823624298517",
 }
 
-var KnownTelegramChannels = map[string]int{
+var KnownTelegramChannels = map[string]int64{
 	"offtopic": -1001430213215,
 	"general":  -1001430213215,
 	// "":         -1001430213215,
