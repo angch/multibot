@@ -2,11 +2,13 @@
 
 build:
 	cd lib/uwu && cargo build --release
-	go build -trimpath .
+	go build -trimpath -v .
 
 test:
 	cd lib/uwu && cargo build --release
 	LD_LIBRARY_PATH=${LD_LIBRARY_PATH} go test ./...
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+	govulncheck ./...
 
 prerequisites:
 	sudo apt install -y cargo
