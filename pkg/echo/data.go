@@ -42,7 +42,8 @@ var fragments = []fragment{
 	// Inspired by https://www.reddit.com/r/sysadmin/comments/15zkt6k/is_there_some_cultural_thing_im_missing_with/
 	{"can i ask", "https://dontasktoask.com/", []string{}},
 	{"anyone can helps", "https://dontasktoask.com/", []string{}},
-	{"around?", "https://dontasktoask.com/", []string{"any", "experts", "sifu"}},
+	{"anyone here", "https://dontasktoask.com/", []string{"any", "pro", "sifu", "expert", "at"}},
+	{"around?", "https://dontasktoask.com/", []string{"any", "experts", "sifu", "pro", "at"}},
 
 	{"can i advice", "No!", []string{"something", "u"}},
 	{"AGI", "*Feel* the AGI!", []string{}},

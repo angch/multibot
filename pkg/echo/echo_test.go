@@ -23,6 +23,7 @@ func TestEchoHandler(t *testing.T) {
 		{"6", "Anyone can helps me on something's? Very urgent and Idk how to solve", "https://dontasktoask.com/"},
 		{"7a", "agi", ""},
 		{"7b", "AGI", "*Feel* the AGI!"},
+		{"8", "does anyone here pro at foo?", "https://dontasktoask.com/"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
