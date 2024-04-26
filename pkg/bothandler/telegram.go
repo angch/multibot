@@ -196,10 +196,6 @@ func (s *TelegramMessagePlatform) botDownload(fileId string, localFilename strin
 	}
 	reader := get.Body
 	defer reader.Close()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
 
 	out, err := os.Create(localFilename)
 	if err != nil {

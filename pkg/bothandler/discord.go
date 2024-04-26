@@ -254,10 +254,6 @@ func botDownload(attachment *discordgo.MessageAttachment, localFilename string) 
 	}
 	reader := get.Body
 	defer reader.Close()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
 
 	out, err := os.Create(localFilename)
 	if err != nil {
