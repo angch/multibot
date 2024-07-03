@@ -23,6 +23,7 @@ var triggers = []string{
 	"Goedemorgen", "Goeiemorgen",
 	"καλημέρα", "Kaliméra", "kalimera",
 	"မင်္ဂလာပါ", "mingalaba", "mingalabar",
+	"Sobahal khair",
 }
 
 var handles = []string{
