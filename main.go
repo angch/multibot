@@ -23,13 +23,13 @@ import (
 	_ "github.com/angch/multibot/pkg/kulll"
 	_ "github.com/angch/multibot/pkg/meme"
 
-	// _ "github.com/angch/multibot/pkg/ocr"
+	_ "github.com/angch/multibot/pkg/qrcode"
 	_ "github.com/angch/multibot/pkg/qrdecode"
 
-//	_ "github.com/angch/multibot/pkg/spacetraders"
+	_ "github.com/angch/multibot/pkg/spacetraders"
 	_ "github.com/angch/multibot/pkg/stablediffusion"
 
-	// _ "github.com/angch/multibot/pkg/stoic"
+	_ "github.com/angch/multibot/pkg/ocr"
 	_ "github.com/angch/multibot/pkg/unicodefont"
 	_ "github.com/angch/multibot/pkg/xkcd"
 	_ "github.com/angch/multibot/pkg/ymca"
