@@ -103,4 +103,14 @@ func (a *SpaceTraders) ProcessRegisterAgentResponse(ctx context.Context, pc Plat
 	// log.Printf("dbship is %v\n", dbship)
 
 	a.SetShip(*dbship)
+
+	// dbsystem := &System{}
+	// s, err = json.Marshal(data.Ship.Nav.
+	//
+	//	if err != nil {
+	//		log.Println(err)
+	//	}
+	//
+	// err = json.Unmarshal(s, dbsystem)
+	// a.SetSystem(*dbsystem)
 }

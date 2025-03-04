@@ -69,6 +69,17 @@ type Ship struct {
 	Cargo        ShipCargoData        `gorm:"-" json:"cargo"`
 }
 
+type System struct {
+	gorm.Model
+	System  string `gorm:"system;uniqueIndex"`
+	Type    string `gorm:"type"`
+	X       int    `gorm:"x"`
+	Y       int    `gorm:"y"`
+	Faction string `gorm:"faction"`
+
+	Data string `gorm:"column:data;type:text" json:"-"`
+}
+
 func (s *Ship) Fix(a *SpaceTraders) {
 	if s.Data != "" {
 		d := s.Data
@@ -79,6 +90,23 @@ func (s *Ship) Fix(a *SpaceTraders) {
 		}
 		s.Data = d
 		s.Owner = o
+	} else {
+		d, err := json.Marshal(s)
+		if err != nil {
+			log.Println(err)
+		}
+		s.Data = string(d)
+	}
+}
+
+func (s *System) Fix(a *SpaceTraders) {
+	if s.Data != "" {
+		d := s.Data
+		err := json.Unmarshal([]byte(d), s)
+		if err != nil {
+			log.Println(err)
+		}
+		s.Data = d
 	} else {
 		d, err := json.Marshal(s)
 		if err != nil {
@@ -120,8 +148,21 @@ func (f *Faction) PrettyPrint() string {
 func (s *Ship) PrettyPrint() string {
 	// a := fmt.Sprintf("%s\n  Nav: %+v\n Crew: %+v\n Fuel: %+v\n Frame: %+v\n Reactor: %+v\n Engine: %+v\n Modules: %+v\n Mounts: %+v\n Registration: %+v\n Cargo: %+v\n",
 	// s.Ship, s.Nav, s.Crew, s.Fuel, s.Frame, s.Reactor, s.Engine, s.Modules, s.Mounts, s.Registration, s.Cargo)
-	a := fmt.Sprintf("%s\n  Nav: %+v\n Crew: %+v\n Fuel: %+v\n Registration: %+v\n Cargo: %+v\n",
-		s.Ship, s.Nav, s.Crew, s.Fuel, s.Registration, s.Cargo)
+	// a := fmt.Sprintf("%s\n  Nav: %+v\n Crew: %+v\n Fuel: %+v\n Registration: %+v\n Cargo: %+v\n",
+	// 	s.Ship, s.Nav, s.Crew, s.Fuel, s.Registration, s.Cargo)
+
+	a := fmt.Sprintf(
+		`The ship %s is %s at system %s, with a crew of %d. It is a %s ship and belongs to the faction %s.`,
+		s.Registration.Name, strings.ToLower(s.Nav.Status), s.Nav.SystemSymbol, s.Crew.Current,
+		strings.ToLower(s.Registration.Role), s.Registration.FactionSymbol,
+	)
+	a += "\n"
+	if s.Cargo.Units > 0 {
+		a += fmt.Sprintf("It can carry %d and is carrying %d units of cargo.\n", s.Cargo.Capacity, s.Cargo.Units)
+	} else {
+		a += fmt.Sprintf("It can carry %d, but is not carrying any cargo now.\n", s.Cargo.Capacity)
+	}
+
 	return a
 }
 
@@ -143,6 +184,7 @@ func load() {
 		&Trait{},
 		&Faction{},
 		&Ship{},
+		&System{},
 	)
 	this.GormDB = gormdb
 
@@ -212,6 +254,30 @@ func (a *SpaceTraders) SetFaction(faction Faction) {
 	}
 	a.lock.Lock()
 	a.KnownFactions[faction.Faction] = knownFaction
+	a.lock.Unlock()
+}
+
+func (a *SpaceTraders) SetSystem(system System) {
+	gormdb := a.GormDB
+	system.Fix(a)
+	log.Printf("SetSystem %s\n", system.System)
+
+	a.lock.RLock()
+	knownSystem, ok := a.KnownSystems[system.System]
+	a.lock.RUnlock()
+	if !ok {
+		knownSystem = system
+	} else {
+		knownSystem.System = system.System
+		knownSystem.Type = system.Type
+		knownSystem.X = system.X
+	}
+	err := gormdb.Debug().Save(&knownSystem).Error
+	if err != nil {
+		log.Println(err)
+	}
+	a.lock.Lock()
+	a.KnownSystems[system.System] = knownSystem
 	a.lock.Unlock()
 }
 

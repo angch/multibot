@@ -28,7 +28,7 @@ func (a *SpaceTraders) RegisterAgent(ctx context.Context, pc PlatformChannel, ag
 	req.Header.Set("User-Agent", "multibot")
 	client := a.HttpClient
 	res, err := client.Do(req)
-	if err != nil {
+	if err != nil || res == nil || res.Body == nil {
 		log.Println(err)
 		return nil, err
 	}
