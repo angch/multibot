@@ -53,35 +53,17 @@ func Tick() {
 }
 
 type ApodPost struct {
-	Text     string
-	ImageURL string
+	Text        string
+	ImageURL    string
+	Description string
 }
 
-func doYMD(y, m, d int) *ApodPost {
-	if y > 2000 {
-		// Perlism
-		y -= 2000
-	}
-
-	url := fmt.Sprintf("https://apod.nasa.gov/apod/ap%02d%02d%02d.html", y, m, d)
-	resp, err := http.Get(url)
+func ParseApod(body string) (*ApodPost, error) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
 	if err != nil {
 		log.Println(err)
-		return nil
+		return nil, err
 	}
-	if resp.StatusCode != 200 {
-		log.Println("Not ready yet ", resp.Status)
-	}
-	if resp.Body == nil {
-		log.Println("Body is empty")
-		return nil
-	}
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	if err != nil {
-		log.Println(err)
-		return nil
-	}
-	resp.Body.Close()
 	imgUrl := ""
 	doc.Find("a").Each(func(i int, s *goquery.Selection) {
 		img := s.AttrOr("href", "")
@@ -95,6 +77,9 @@ func doYMD(y, m, d int) *ApodPost {
 			}
 		}
 	})
+
+	description := ""
+
 	title := ""
 	doc.Find("title").Each(func(i int, s *goquery.Selection) {
 		title = strings.TrimSpace(s.Text())
@@ -120,15 +105,47 @@ func doYMD(y, m, d int) *ApodPost {
 	}
 
 	if title != "" && imgUrl != "" {
-		post := ApodPost{
-			Text:     title,
-			ImageURL: imgUrl,
-		}
-		return &post
-	} else {
-		log.Println("No title", title, "or url", imgUrl, "in", url)
+		return &ApodPost{
+			Text:        title,
+			ImageURL:    imgUrl,
+			Description: description,
+		}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("No title or url")
+}
+
+func doYMD(y, m, d int) *ApodPost {
+	if y > 2000 {
+		// Perlism
+		y -= 2000
+	}
+
+	url := fmt.Sprintf("https://apod.nasa.gov/apod/ap%02d%02d%02d.html", y, m, d)
+	resp, err := http.Get(url)
+	if err != nil || resp == nil || resp.Body == nil {
+		log.Println(err)
+		return nil
+	}
+	if resp.StatusCode != 200 {
+		log.Println("Not ready yet ", resp.Status)
+	}
+	if resp.Body == nil {
+		log.Println("Body is empty")
+		return nil
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	resp.Body.Close()
+	myApod, err := ParseApod(string(body))
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	return myApod
 }
 
 func Apod() {
