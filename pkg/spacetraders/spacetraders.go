@@ -32,9 +32,6 @@ var globalState = map[PlatformChannel]*Agent{}
 // 	Ships   map[string]Ship
 // }
 
-type System struct {
-	LastUpdate time.Time
-}
 type Waypoint struct {
 }
 
@@ -54,6 +51,7 @@ type SpaceTraders struct {
 	KnownAgents   map[string]Agent
 	KnownShips    map[string]Ship
 	AgentShips    map[string]map[string]bool
+	KnownSystems  map[string]System
 }
 
 var this = SpaceTraders{
@@ -67,6 +65,7 @@ var this = SpaceTraders{
 	KnownAgents:   map[string]Agent{},
 	KnownShips:    map[string]Ship{},
 	AgentShips:    map[string]map[string]bool{},
+	KnownSystems:  map[string]System{},
 }
 
 func init() {
@@ -111,7 +110,7 @@ func SpaceTradersHandler(request bothandler.Request) string {
 
 	channelAgent := PlatformChannel{request.Platform, request.Channel}
 	agentState, ok := globalState[channelAgent]
-	if !ok && words[0] != "init" {
+	if !ok && words[0] != "init" || agentState == nil {
 		return "This agent is not initialized"
 	}
 	ctx := context.Background()
