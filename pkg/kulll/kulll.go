@@ -36,7 +36,7 @@ type History struct {
 }
 
 var lock = sync.Mutex{}
-var history map[string]History
+var history = map[string]History{}
 var myrand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func init() {
