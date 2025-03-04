@@ -248,7 +248,7 @@ func botDownload(attachment *discordgo.MessageAttachment, localFilename string) 
 	log.Println("Downloading", downloadUrl)
 
 	get, err := http.Get(downloadUrl)
-	if err != nil {
+	if err != nil || get == nil || get.Body == nil {
 		log.Println(err)
 		return err
 	}

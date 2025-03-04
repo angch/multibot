@@ -1,6 +1,7 @@
 package bothandler
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -104,7 +105,7 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 					msg.Caption = r.Text
 					_, err := s.Client.Send(msg)
 					if err != nil {
-						log.Println(err)
+						log.Println("NewPhotoUpload", err)
 					}
 				}
 			}
@@ -134,9 +135,10 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 		if m.Photo != nil {
 			// log.Printf("photo %+v\n", m)
 			// FIXME: Actual exec path never goes through here.
-			targetPixels := 512 * 512
+			// targetPixels := 512 * 512
+			targetPixels := 1024 * 1024
 			best := &tgbotapi.PhotoSize{}
-			bestSize := 100000000
+			bestSize := 100_000_000
 
 			for _, v := range *m.Photo {
 				pixels := v.Height * v.Width
@@ -149,7 +151,20 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 					best = &v
 				}
 			}
-			// log.Printf("photosize %+v\n", best)
+
+			// Nah, pick the biggest
+			biggestSoFar := 0
+			for k, v := range *m.Photo {
+				if v.FileSize > biggestSoFar {
+					biggestSoFar = v.FileSize
+					best = &v
+				}
+				_ = k
+				// log.Printf("photo %v %+v\n", k, v)
+			}
+
+			debug, _ := json.Marshal(update)
+			log.Printf("message %+v\n", string(debug))
 			// FIXME:
 			filename := "tmp/" + best.FileID
 			err := s.botDownload(best.FileID, filename)
@@ -190,7 +205,7 @@ func (s *TelegramMessagePlatform) botDownload(fileId string, localFilename strin
 	log.Println("Downloading", downloadUrl)
 
 	get, err := http.Get(downloadUrl)
-	if err != nil {
+	if err != nil || get == nil || get.Body == nil {
 		log.Println(err)
 		return err
 	}
