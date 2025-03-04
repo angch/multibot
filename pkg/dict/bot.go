@@ -23,6 +23,9 @@ func DictHandler(r bothandler.Request) string {
 		return ""
 	}
 
+	if myDict == nil {
+		return ""
+	}
 	w := myDict.All
 	d := myDict
 	sorttype := ""
