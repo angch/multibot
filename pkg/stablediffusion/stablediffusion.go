@@ -70,7 +70,7 @@ func GetMessage(input bothandler.ExtendedMessage) *bothandler.ExtendedMessage {
 		var resp *http.Response
 		resp, err = http.Get(u.String())
 
-		if err != nil {
+		if err != nil || resp == nil || resp.Body == nil {
 			fmt.Println("error retrieving", err)
 			return &bothandler.ExtendedMessage{
 				Text:  err.Error(),

@@ -27,3 +27,9 @@ updatemod:
 	cd lib/uwu && cargo build --release
 	LD_LIBRARY_PATH=${LD_LIBRARY_PATH} go test ./...
 	git add go.mod go.sum vendor lib/uwu/Cargo.lock
+
+nilaway:
+	go install go.uber.org/nilaway/cmd/nilaway@latest
+	nilaway -exclude-pkgs \
+		github.com/getsentry/sentry-go,github.com/pkg/sftp,google.golang.org/protobuf,google.golang.org/grpc,github.com/form3tech-oss/jwt-go,firebase.google.com/go/v4 \
+		./...

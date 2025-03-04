@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type Server struct {
@@ -69,6 +70,10 @@ var enhancedPrompts = []string{
 	"(8k)",
 }
 
+var HttpClient = http.Client{
+	Timeout: 30 * time.Second,
+}
+
 // Prompt2PosNeg decomposes a text input into positive and negative prompts
 func (s *Server) Prompt2PosNeg(input string) (string, string) {
 	left, right, ok := strings.Cut(input, "--")
@@ -77,6 +82,10 @@ func (s *Server) Prompt2PosNeg(input string) (string, string) {
 	}
 	return input, s.NegativePrompt
 }
+
+var PromptReplace = strings.NewReplacer(
+	"self portrait", "painting of an ugly green goblin painting a self portrait on an easel. this is in a basement",
+)
 
 func (s *Server) Txt2Img(prompt string) ([]byte, error) {
 	// quick hack
@@ -89,19 +98,24 @@ func (s *Server) Txt2Img(prompt string) ([]byte, error) {
 	// if len(prompt) < 20 {
 	// 	p.Prompt = p.Prompt + ", " + enhancedPrompt
 	// }
+	prompt = PromptReplace.Replace(prompt)
+
 	pos, neg := s.Prompt2PosNeg(prompt)
 	p.Prompt = pos
 	p.NegativePrompt = neg
-	p.SetSampler("DPM++ SDE Karras")
+	p.SetSampler("DPM++ SDE")
 
 	u := s.URL.String()
 	u += "/sdapi/v1/txt2img"
 	log.Println(u, p.IoReader().String())
-	resp, err := http.Post(u, "application/json", p.IoReader())
-	if err != nil {
+	t1 := time.Now()
+	resp, err := HttpClient.Post(u, "application/json", p.IoReader())
+	if err != nil || resp == nil || resp.Body == nil {
 		log.Println(err)
 		return nil, err
 	}
+	t2 := time.Now()
+	log.Println("Time taken", t2.Sub(t1))
 	// FIXME: check http errorcode, etc
 
 	body, err := io.ReadAll(resp.Body)
@@ -137,7 +151,7 @@ func (s *Server) GetConfig() (*Config, error) {
 	u := s.URL.String()
 	u += "/sdapi/v1/options"
 	resp, err := http.Get(u)
-	if err != nil {
+	if err != nil || resp == nil || resp.Body == nil {
 		log.Println(err)
 		return nil, err
 	}
@@ -157,7 +171,7 @@ func (s *Server) GetModels() ([]Model, error) {
 	u := s.URL.String()
 	u += "/sdapi/v1/sd-models"
 	resp, err := http.Get(u)
-	if err != nil {
+	if err != nil || resp == nil || resp.Body == nil {
 		log.Println(err)
 		return nil, err
 	}
@@ -185,7 +199,7 @@ func (s *Server) SetConfig(config *Config) error {
 	u += "/sdapi/v1/options"
 	log.Println(u, config.IoReader().String())
 	resp, err := http.Post(u, "application/json", config.IoReader())
-	if err != nil {
+	if err != nil || resp == nil || resp.Body == nil {
 		log.Println(err)
 		return err
 	}
