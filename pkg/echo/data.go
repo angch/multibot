@@ -49,4 +49,6 @@ var fragments = []fragment{
 	{"AGI", "*Feel* the AGI!", []string{}},
 
 	{"buy new", "https://www.youtube.com/watch?v=hpQQohcHk9Q", []string{"one", "just", "phone"}},
+
+	{"i am a genius", "You're an idiot.", []string{}},
 }
