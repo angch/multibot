@@ -80,6 +80,19 @@ var runCmd = &cobra.Command{
 			go s.ProcessMessages()
 		}
 
+		mattermostBotToken := os.Getenv("MATTERMOST_BOT_TOKEN")
+		mattermostURL := os.Getenv("MATTERMOST_URL")
+		if mattermostBotToken != "" && mattermostURL != "" {
+			s, err := bothandler.NewMessagePlatformFromMattermost(mattermostBotToken, mattermostURL)
+			if err != nil {
+				log.Fatal(err)
+			}
+			s.DefaultChannel = "sanbox" // FIXME
+			// log.Println("Mattermost bot is now running.")
+			bothandler.RegisterMessagePlatform(s)
+			go s.ProcessMessages()
+		}
+
 		ircConn := os.Getenv("IRC_CONN")
 		if ircConn != "" {
 			ircParams, err := url.Parse(ircConn)

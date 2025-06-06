@@ -1,6 +1,6 @@
 # multibot
 
-A multiplatform Bot on Discord, Slack, Telegram and IRC) for fun and play. It was called "discordbot" before.
+A multiplatform Bot on Discord, Slack, Telegram, Mattermost and IRC) for fun and play. It was called "discordbot" before.
 
 ## Stuff to try
 
@@ -39,6 +39,26 @@ A multiplatform Bot on Discord, Slack, Telegram and IRC) for fun and play. It wa
 <https://austinhenley.com/blog/makinguselessstuff.html>
 
 <https://justforfunnoreally.dev/>
+
+## Configuration
+
+The bot supports multiple platforms. Set the appropriate environment variables for the platforms you want to use:
+
+### Discord
+- `DISCORD_BOT_TOKEN` - Your Discord bot token
+
+### Telegram  
+- `TELEGRAM_BOT_TOKEN` - Your Telegram bot token
+
+### Slack
+- `SLACK_BOT_TOKEN` - Your Slack bot token
+
+### Mattermost
+- `MATTERMOST_BOT_TOKEN` - Your Mattermost bot token
+- `MATTERMOST_URL` - Your Mattermost server URL (e.g., https://your-mattermost-server.com)
+
+### IRC
+- Configure IRC settings in your environment
 
 ## How to contribute?
 

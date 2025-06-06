@@ -87,6 +87,21 @@ var sendmsgCmd = &cobra.Command{
 			}
 		}
 
+		if platform == "mattermost" || platform == "all" {
+			mattermostBotToken := os.Getenv("MATTERMOST_BOT_TOKEN")
+			mattermostURL := os.Getenv("MATTERMOST_URL")
+			if mattermostBotToken != "" && mattermostURL != "" {
+				s, err := bothandler.NewMessagePlatformFromMattermost(mattermostBotToken, mattermostURL)
+				if err != nil {
+					log.Fatal(err)
+				}
+				s.DefaultChannel = "sanbox" // FIXME
+				log.Println("Mattermost bot is now running.")
+				bothandler.RegisterMessagePlatform(s)
+				go s.ProcessMessages()
+			}
+		}
+
 		if platform == "irc" || platform == "all" {
 			ircConn := os.Getenv("IRC_CONN")
 			if ircConn != "" {
