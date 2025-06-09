@@ -27,11 +27,44 @@ import (
 	"gopkg.in/irc.v3"
 )
 
-// sendmsgCmd represents the sendmsg command
+// sendmsgCmd is a Cobra command that sends a message to a specified channel on messaging platforms
+// outside of the main event loop. This command is useful for sending one-off messages without
+// starting the full bot event processing.
+//
+// Usage:
+//
+//	sendmsg <platform> <channel> <message>
+//
+// Parameters:
+//   - platform: The messaging platform to send the message to. Supported values:
+//   - "discord": Send to Discord (requires DISCORDTOKEN environment variable)
+//   - "slack": Send to Slack (requires SLACK_APP_TOKEN and SLACK_BOT_TOKEN environment variables)
+//   - "telegram": Send to Telegram (requires TELEGRAM_BOT_TOKEN environment variable)
+//   - "mattermost": Send to Mattermost (requires MATTERMOST_BOT_TOKEN and MATTERMOST_URL environment variables)
+//   - "irc": Send to IRC (requires IRC_CONN environment variable with connection URL)
+//   - "all": Send to all configured platforms
+//   - channel: The target channel name or ID to send the message to
+//   - message: The message content to send (multiple words will be joined with spaces)
+//
+// Environment Variables:
+//   - DISCORDTOKEN: Discord bot token
+//   - SLACK_APP_TOKEN: Slack app token (must start with "xapp-")
+//   - SLACK_BOT_TOKEN: Slack bot token (must start with "xoxb-")
+//   - TELEGRAM_BOT_TOKEN: Telegram bot token
+//   - MATTERMOST_BOT_TOKEN: Mattermost bot token
+//   - MATTERMOST_URL: Mattermost server URL
+//   - IRC_CONN: IRC connection URL (format: irc://username:password@host/channel)
+//
+// Examples:
+//
+//	sendmsg discord general "Hello Discord!"
+//	sendmsg slack random "Test message"
+//	sendmsg all announcements "Message to all platforms"
 var sendmsgCmd = &cobra.Command{
-	Use:   "sendmsg",
-	Short: "Send a message to channel as bot, outside of the event loop",
-	Long:  `Send a message to channel as bot, outside of the event loop`,
+	Use:     "sendmsg",
+	Short:   "Send a message to channel as bot, outside of the event loop",
+	Long:    `Send a message to channel as bot, outside of the event loop, params are platform, channel, and message.`,
+	Example: `  sendmsg discord general "Hello Discord!"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 3 {
 			log.Println("Not enough params")
@@ -95,7 +128,10 @@ var sendmsgCmd = &cobra.Command{
 				if err != nil {
 					log.Fatal(err)
 				}
-				s.DefaultChannel = "sanbox" // FIXME
+				mattermost_channel := os.Getenv("MATTERMOST_CHANNEL")
+				if mattermost_channel != "" {
+					s.DefaultChannel = mattermost_channel
+				}
 				log.Println("Mattermost bot is now running.")
 				bothandler.RegisterMessagePlatform(s)
 				go s.ProcessMessages()

@@ -87,7 +87,10 @@ var runCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
-			s.DefaultChannel = "sanbox" // FIXME
+			mattermost_channel := os.Getenv("MATTERMOST_CHANNEL")
+			if mattermost_channel != "" {
+				s.DefaultChannel = mattermost_channel
+			}
 			// log.Println("Mattermost bot is now running.")
 			bothandler.RegisterMessagePlatform(s)
 			go s.ProcessMessages()
