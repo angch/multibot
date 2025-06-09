@@ -78,7 +78,9 @@ func NewMessagePlatformFromMattermost(mattermostBotToken, mattermostURL string) 
 
 func (s *MattermostMessagePlatform) ProcessMessages() {
 	// Connect to WebSocket for real-time messaging
-	wsURL := strings.Replace(s.ServerURL, "http", "ws", 1) + "/api/v4/websocket"
+	wsURL := strings.Replace(s.ServerURL, "http://", "ws://", 1)
+	wsURL = strings.Replace(wsURL, "https://", "wss://", 1)
+	wsURL += "/api/v4/websocket"
 
 	dialer := websocket.Dialer{}
 	headers := http.Header{}
@@ -131,6 +133,10 @@ func (s *MattermostMessagePlatform) handleWebSocketEvent(event *MattermostWebSoc
 		return
 	}
 
+	// If replying to thread, use root_id = old.root_id.
+	// If creating a thread from non-thread, set root_id = old.id.
+	// Set root_id = "" if want to reply to channel and not thread
+
 	postData, ok := event.Data["post"].(string)
 	if !ok {
 		return
@@ -156,14 +162,21 @@ func (s *MattermostMessagePlatform) handleWebSocketEvent(event *MattermostWebSoc
 	h, ok := Handlers[content]
 	if ok {
 		response := h()
-		s.sendReply(post.ChannelId, response, post.RootId)
+		s.sendReply(post.ChannelId, response, post.Id)
+	}
+
+	// log.Printf("Event is : %s, Data: %+v\n", event.Event, event.Data)
+
+	replyTo := post.Id // Create a thread based on the post ID
+	if post.RootId != "" {
+		replyTo = post.RootId // If replying to a thread, use the root ID
 	}
 
 	// Handle catchall handlers
 	for _, v := range CatchallHandlers {
 		r := v(Request{content, "mattermost", post.ChannelId, post.UserId})
 		if r != "" {
-			s.sendReply(post.ChannelId, r, post.RootId)
+			s.sendReply(post.ChannelId, r, replyTo)
 		}
 	}
 
@@ -172,11 +185,11 @@ func (s *MattermostMessagePlatform) handleWebSocketEvent(event *MattermostWebSoc
 		r := v(ExtendedMessage{Text: content})
 		if r != nil {
 			if r.Text != "" && r.Image == nil {
-				s.sendReply(post.ChannelId, r.Text, post.RootId)
+				s.sendReply(post.ChannelId, r.Text, replyTo)
 			}
 			if r.Image != nil {
 				// Handle image uploads
-				s.sendImageReply(post.ChannelId, r.Text, r.Image, post.RootId, content)
+				s.sendImageReply(post.ChannelId, r.Text, r.Image, replyTo, content)
 			}
 		}
 	}
@@ -191,7 +204,7 @@ func (s *MattermostMessagePlatform) handleWebSocketEvent(event *MattermostWebSoc
 		if ok {
 			response := ih(Request{actual_content, "mattermost", post.ChannelId, post.UserId})
 			if response != "" {
-				s.sendReply(post.ChannelId, response, post.RootId)
+				s.sendReply(post.ChannelId, response, replyTo)
 			}
 		}
 	}
@@ -238,9 +251,35 @@ func (s *MattermostMessagePlatform) sendReply(channelId, message, rootId string)
 }
 
 func (s *MattermostMessagePlatform) sendImageReply(channelId, message string, imageData []byte, rootId, originalContent string) {
-	// For simplicity, we'll just send the text message for now
-	// Implementing file upload would require multipart form data
-	s.sendReply(channelId, message, rootId)
+	ctx := context.Background()
+
+	// First, upload the image file
+	fileUploadResponse, _, err := s.Client.UploadFile(ctx, imageData, channelId, "image.png")
+	if err != nil {
+		log.Printf("Failed to upload image: %v", err)
+		// Fallback to text message
+		s.sendReply(channelId, message, rootId)
+		return
+	}
+
+	// Create post with the uploaded file
+	post := &model.Post{
+		ChannelId: channelId,
+		Message:   message,
+		FileIds:   []string{fileUploadResponse.FileInfos[0].Id},
+	}
+
+	if rootId != "" {
+		post.RootId = rootId
+	}
+	log.Println("Sending image reply to channel:", channelId, "with root ID:", rootId)
+
+	_, _, err = s.Client.CreatePost(ctx, post)
+	if err != nil {
+		log.Printf("Failed to send image reply: %v", err)
+		// Fallback to text message
+		s.sendReply(channelId, message, rootId)
+	}
 }
 
 func (s *MattermostMessagePlatform) downloadFile(fileId, localFilename string) error {
