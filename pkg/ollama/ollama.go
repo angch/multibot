@@ -22,6 +22,7 @@ type Server struct {
 var server *Server
 
 var triggerWord = "!oll"
+var model = "gemma3:12b-it-qat"
 
 func NewOllamaServer(urlstring string) *Server {
 	if urlstring == "" {
@@ -106,7 +107,7 @@ func OllamaCatchallHandler(request bothandler.Request) string {
 	}
 	stream := false
 	req := &ollamaapi.ChatRequest{
-		Model:    "gemma3",
+		Model:    model,
 		Messages: []ollamaapi.Message{localsystemmsg, msg},
 		Stream:   &stream,
 	}
