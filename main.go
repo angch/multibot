@@ -34,6 +34,8 @@ import (
 	_ "github.com/angch/multibot/pkg/xkcd"
 	_ "github.com/angch/multibot/pkg/ymca"
 	_ "github.com/angch/multibot/pkg/ynot"
+
+	_ "github.com/angch/multibot/pkg/ollama"
 )
 
 func main() {
