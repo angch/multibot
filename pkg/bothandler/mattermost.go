@@ -252,6 +252,7 @@ func (s *MattermostMessagePlatform) sendReply(channelId, message, rootId string)
 
 func (s *MattermostMessagePlatform) sendImageReply(channelId, message string, imageData []byte, rootId, originalContent string) {
 	ctx := context.Background()
+	_ = originalContent
 
 	// First, upload the image file
 	fileUploadResponse, _, err := s.Client.UploadFile(ctx, imageData, channelId, "image.png")

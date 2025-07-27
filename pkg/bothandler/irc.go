@@ -51,13 +51,14 @@ func (s *IrcMessagePlatform) connect() error {
 func (s *IrcMessagePlatform) ProcessMessages() {
 	s.ClientConfig.Handler = irc.HandlerFunc(func(c *irc.Client, m *irc.Message) {
 		// log.Printf("irchandler %+v\n", *m)
-		if m.Command == "001" {
+		switch m.Command {
+		case "001":
 			// 001 is a welcome event, so we join channels there
 			err := c.Write("JOIN #" + s.DefaultChannel)
 			if err != nil {
 				log.Println(err)
 			}
-		} else if m.Command == "PRIVMSG" {
+		case "PRIVMSG":
 			// log.Printf("params are: %v\n", m.Params)
 			if len(m.Params) > 1 {
 				channel := m.Params[0]
