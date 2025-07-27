@@ -1,8 +1,8 @@
 module github.com/angch/multibot
 
-go 1.23.0
+go 1.24.0
 
-toolchain go1.24.3
+toolchain go1.24.4
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.3
@@ -15,6 +15,7 @@ require (
 	github.com/liyue201/goqr v0.0.0-20200803022322-df443203d4ea
 	github.com/mattermost/mattermost/server/public v0.1.14
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/ollama/ollama v0.9.1
 	github.com/siongui/gojianfan v0.0.0-20210926212422-2f175ac615de
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/slack-go/slack v0.16.0

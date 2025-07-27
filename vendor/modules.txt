@@ -135,6 +135,14 @@ github.com/ncruces/go-strftime
 # github.com/oklog/run v1.1.0
 ## explicit; go 1.13
 github.com/oklog/run
+# github.com/ollama/ollama v0.9.1
+## explicit; go 1.24.0
+github.com/ollama/ollama/api
+github.com/ollama/ollama/auth
+github.com/ollama/ollama/envconfig
+github.com/ollama/ollama/format
+github.com/ollama/ollama/types/model
+github.com/ollama/ollama/version
 # github.com/pborman/uuid v1.2.1
 ## explicit
 github.com/pborman/uuid
@@ -236,12 +244,16 @@ go.uber.org/multierr
 ## explicit; go 1.23.0
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
+golang.org/x/crypto/chacha20
+golang.org/x/crypto/curve25519
 golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/salsa20/salsa
 golang.org/x/crypto/scrypt
+golang.org/x/crypto/ssh
+golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 # golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
 ## explicit; go 1.23.0
 golang.org/x/exp/constraints
