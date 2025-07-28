@@ -118,6 +118,7 @@ func OllamaCatchallHandler(request bothandler.Request) string {
 	defer close(respChan)
 
 	respFunc := func(resp ollamaapi.ChatResponse) error {
+		resp.Message.Content = strings.TrimSuffix(resp.Message.Content, "</start_of_turn>")
 		log.Printf("ollama.Chat response: %v\n", resp)
 		respChan <- resp
 		return nil
