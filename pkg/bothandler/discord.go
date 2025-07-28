@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/angch/multibot/pkg/engineersmy"
 	"github.com/bwmarrin/discordgo"
@@ -55,21 +56,47 @@ func (dg *DiscordMessagePlatform) Send(text string) {
 	}
 }
 
+var breaklength = 2000
+
 func (dg *DiscordMessagePlatform) SendWithOptions(text string, options SendOptions) {
 	if dg == nil {
 		return
 	}
-	if options.Silent {
-		// FIXME: Figuure out how to use ChannelMessageSendComplex to send silent messages
-		_, err := dg.Session.ChannelMessageSend(dg.Channels[""], text)
-		if err != nil {
-			log.Println(err)
+
+	for len(text) > 0 {
+		text2 := text
+		delay := time.Duration(0)
+
+		if len(text) > breaklength {
+			// Find whitespace at 2000
+			spaceIndex := strings.LastIndex(text[:breaklength], " ")
+			if spaceIndex != -1 {
+				text2 = text[:spaceIndex]
+				text = text[spaceIndex+1:]
+			} else if len(text) > breaklength {
+				// If no whitespace, just cut it off
+				// This is a hacky way to avoid sending too long messages
+				text2 = text[:breaklength]
+				text = text[breaklength:]
+			}
+			delay = time.Duration(200) * time.Millisecond
+		} else {
+			text = ""
 		}
-	} else {
-		_, err := dg.Session.ChannelMessageSend(dg.Channels[""], text)
-		if err != nil {
-			log.Println(err)
+
+		if options.Silent {
+			// FIXME: Figuure out how to use ChannelMessageSendComplex to send silent messages
+			_, err := dg.Session.ChannelMessageSend(dg.Channels[""], text2)
+			if err != nil {
+				log.Println(err)
+			}
+		} else {
+			_, err := dg.Session.ChannelMessageSend(dg.Channels[""], text2)
+			if err != nil {
+				log.Println(err)
+			}
 		}
+		time.Sleep(delay)
 	}
 }
 
@@ -99,14 +126,34 @@ func discordMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			username = m.Author.Username
 		}
 		r := v(Request{m.Content, "discord", m.ChannelID, username})
-		if r != "" {
+		for r != "" {
+			r2 := r
+			delay := time.Duration(0)
+			if len(r) > breaklength {
+				// Find whitespace at 2000
+				spaceIndex := strings.LastIndex(r[:breaklength], " ")
+				if spaceIndex != -1 {
+					r2 = r[:spaceIndex]
+					r = r[spaceIndex+1:]
+				} else if len(r) > breaklength {
+					// If no whitespace, just cut it off
+					r2 = r[:breaklength]
+					r = r[breaklength:]
+				}
+				delay = time.Duration(200) * time.Millisecond
+			} else {
+				r = ""
+			}
+
 			_, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
-				Content:   r,
+				Content:   r2,
 				Reference: m.Reference(),
 			})
 			if err != nil {
 				log.Println(err)
 			}
+
+			time.Sleep(delay)
 		}
 	}
 
