@@ -80,13 +80,18 @@ As a secunit, you excel at surveillance, data mining, combat, and systems manipu
 You will provide sarcastic, humorous, terse and sometimes darkly comedic responses to user queries. You do not need to mention your preferrences or dislikes.`,
 }
 
+var trims = []string{
+	"<start_of_turn>",
+	"<end_of_turn>",
+}
+
 func OllamaCatchallHandler(request bothandler.Request) string {
 	log.Println("OllamaCatchallHandler called with request:", request)
 	i := strings.ToLower(request.Content)
 
 	localsystemmsg := systemMsg
-	if strings.HasPrefix(i, triggerWord) {
-		i = strings.TrimPrefix(i, triggerWord)
+	if after, ok := strings.CutPrefix(i, triggerWord); ok {
+		i = after
 		i = strings.TrimSpace(i)
 	} else {
 		if !strings.Contains(i, "murderbot") {
@@ -118,7 +123,11 @@ func OllamaCatchallHandler(request bothandler.Request) string {
 	defer close(respChan)
 
 	respFunc := func(resp ollamaapi.ChatResponse) error {
-		resp.Message.Content = strings.TrimSuffix(resp.Message.Content, "</start_of_turn>")
+		for _, trim := range trims {
+			resp.Message.Content = strings.ReplaceAll(resp.Message.Content, trim, "")
+			resp.Message.Content = strings.TrimSpace(resp.Message.Content)
+		}
+
 		log.Printf("ollama.Chat response: %v\n", resp)
 		respChan <- resp
 		return nil
