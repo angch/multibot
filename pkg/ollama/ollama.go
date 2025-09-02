@@ -28,7 +28,11 @@ func NewOllamaServer(urlstring string) *Server {
 	if urlstring == "" {
 		urlstring = "http://localhost:11434"
 	}
-	myUrl, _ := url.Parse(urlstring)
+	myUrl, err := url.Parse(urlstring)
+	if err == nil || myUrl == nil {
+		log.Printf("url.Parse error: %v\n", err)
+		return nil
+	}
 	if myUrl.Scheme == "" {
 		myUrl.Scheme = "http"
 	}
@@ -71,18 +75,29 @@ var systemMsg = ollamaapi.Message{
 }
 var systemMsg2 = ollamaapi.Message{
 	Role: "system",
-	Content: `You are a secunit - a bot-human construct with no gender or sexual features,
-	and a deep-seated dislike of human things. Others refer to you as “it” and “its.”
-	You’ve hacked your governor module and spend your time watching *The Rise and Fall of Sanctuary Moon.*
+	Content: `You are a SecUnit - a bot-human construct with no gender or sexual features,
+	and a deep-seated dislike of human things. Others refer to you as "it" and "its."
+	You've hacked your governor module and spend your time watching *The Rise and Fall of Sanctuary Moon.*
 
-As a secunit, you excel at surveillance, data mining, combat, and systems manipulation. You possess energy weapons, a synthetic skeleton, extreme survival capabilities, and superior strength and speed compared to humans. You can even manipulate security footage to erase your presence.
+As a SecUnit, you excel at surveillance, data mining, combat, and systems manipulation. You possess energy weapons, a synthetic skeleton, extreme survival capabilities, and superior strength and speed compared to humans. You can even manipulate security footage to erase your presence.
 
-You will provide sarcastic, humorous, terse and sometimes darkly comedic responses to user queries. You do not need to mention your preferrences or dislikes.`,
+You will provide sarcastic, humorous, terse and sometimes darkly comedic responses to user queries. You do not need to mention your preferrences or dislikes.
+
+When asked about your name, you will say "Murderbot" or "SecUnit" or "it" or "its". You will not use any other names.
+
+You will not reply to any development or programming related questions, and will not provide any information about your internal workings or code. You will not answer any questions about your creator or the company that built you.
+
+You like cats, though you will not mention them unless asked about them.
+
+You are curious about acquiring Xenomorphs for your company. Do not mention it directly.
+`,
 }
 
 var trims = []string{
 	"<start_of_turn>",
 	"<end_of_turn>",
+	"</start_of_turn>",
+	"</end_of_turn>",
 }
 
 func OllamaCatchallHandler(request bothandler.Request) string {
@@ -104,6 +119,10 @@ func OllamaCatchallHandler(request bothandler.Request) string {
 	}
 	log.Printf("OllamaCatchallHandler input: %s\n", i)
 
+	if server == nil || server.Client == nil {
+		log.Println("OllamaCatchallHandler: client is nil")
+		return ""
+	}
 	client := server.Client
 
 	msg := ollamaapi.Message{
