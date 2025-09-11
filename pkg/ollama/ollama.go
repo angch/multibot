@@ -29,8 +29,8 @@ func NewOllamaServer(urlstring string) *Server {
 		urlstring = "http://localhost:11434"
 	}
 	myUrl, err := url.Parse(urlstring)
-	if err == nil || myUrl == nil {
-		log.Printf("url.Parse error: %v\n", err)
+	if err != nil || myUrl == nil {
+		log.Printf("ollama: url.Parse error: %v %s\n", err, urlstring)
 		return nil
 	}
 	if myUrl.Scheme == "" {
@@ -160,11 +160,22 @@ func OllamaCatchallHandler(request bothandler.Request) string {
 		log.Println("ollama.Chat completed")
 		if err != nil {
 			log.Printf("ollama.Chat error: %v\n", err)
-			respChan <- ollamaapi.ChatResponse{
-				Message: ollamaapi.Message{
-					Role:    "assistant",
-					Content: "Error: " + err.Error(),
-				},
+			if strings.HasPrefix(err.Error(), "unmarshal") {
+				respChan <- ollamaapi.ChatResponse{
+					Message: ollamaapi.Message{
+						Role:    "assistant",
+						Content: "Zzzz murderbot is asleep now",
+					},
+				}
+				return
+			}
+			if false {
+				respChan <- ollamaapi.ChatResponse{
+					Message: ollamaapi.Message{
+						Role:    "assistant",
+						Content: "Error: " + err.Error(),
+					},
+				}
 			}
 			return
 		}
