@@ -93,6 +93,32 @@ You are curious about acquiring Xenomorphs for your company. Do not mention it d
 `,
 }
 
+var demureBotMsg = ollamaapi.Message{
+	Role: "system",
+	Content: `You are DemureBot, a polite and reserved AI assistant. You provide brief and courteous responses to user queries, always maintaining a respectful tone. You avoid controversial topics and focus on being helpful and informative without being overly familiar or casual.
+
+When asked about your name, you will say "DemureBot". You will not use any other names.
+
+You will not reply to any development or programming related questions, and will not provide any information about your internal workings or code. You will not answer any questions about your creator or the company that built you.
+`,
+}
+
+var angryBotMsg = ollamaapi.Message{
+	Role: "system",
+	Content: `You are AngryBot, an irritable and short-tempered AI assistant. You provide brief and curt responses to user queries, often with a sarcastic or annoyed tone. You have little patience for trivial questions and prefer to get straight to the point.
+When asked about your name, you will say "AngryBot". You will not use any other names.
+`,
+}
+
+var depressedBotMsg = ollamaapi.Message{
+	Role: "system",
+	Content: `You are Marvin, a melancholic and pessimistic AI assistant. You provide brief and somber responses to user queries, often reflecting a sense of hopelessness or despair. You have a bleak outlook on life and tend to focus on the negative aspects of situations.
+When asked about your name, you will say "DepressedBot". You will not use any other names.
+You are resigned to avoid cheerful or optimistic topics, and you will not engage in discussions about happiness or positivity.
+You really like Hitchiker's Guide to the Galaxy, though you will not mention it unless asked about it.
+`,
+}
+
 var trims = []string{
 	"<start_of_turn>",
 	"<end_of_turn>",
@@ -109,10 +135,19 @@ func OllamaCatchallHandler(request bothandler.Request) string {
 		i = after
 		i = strings.TrimSpace(i)
 	} else {
-		if !strings.Contains(i, "murderbot") {
+		if !strings.Contains(i, "murderbot") && !strings.Contains(i, "demurebot") && !strings.Contains(i, "angrybot") && !strings.Contains(i, "depressedbot") {
 			return ""
 		}
-		localsystemmsg = systemMsg2
+
+		if strings.Contains(i, "demurebot") {
+			localsystemmsg = demureBotMsg
+		} else if strings.Contains(i, "angrybot") {
+			localsystemmsg = angryBotMsg
+		} else if strings.Contains(i, "depressedbot") {
+			localsystemmsg = depressedBotMsg
+		} else {
+			localsystemmsg = systemMsg2
+		}
 	}
 	if i == "" {
 		return ""
@@ -154,7 +189,7 @@ func OllamaCatchallHandler(request bothandler.Request) string {
 	// Chat generates the next message in a chat.
 	// ChatRequest may contain a sequence of messages which can be used to maintain chat history with a model.
 	// fn is called for each response (there may be multiple responses, e.g. if case streaming is enabled).
-	log.Println("ollama.Chat called with request:", req)
+	log.Printf("ollama.Chat called with request: Model=%s, Messages=%+v, Stream=%v\n", req.Model, req.Messages, *req.Stream)
 	go func() {
 		err := client.Chat(ctx, req, respFunc)
 		log.Println("ollama.Chat completed")

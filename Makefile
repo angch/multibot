@@ -17,7 +17,7 @@ prerequisites:
 include dev.sh
 
 run:
-	while true; do LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./multibot run; done
+	while true; do LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./multibot run; sleep 600; done
 
 updatemod:
 	go get -u ./...

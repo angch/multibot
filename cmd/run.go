@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/angch/multibot/pkg/bothandler"
 	"github.com/spf13/cobra"
@@ -41,6 +42,11 @@ var runCmd = &cobra.Command{
 		if discordtoken != "" {
 			n, err := bothandler.NewMessagePlatformFromDiscord(discordtoken)
 			if err != nil {
+				if strings.Contains(err.Error(), "Authentication") {
+					// Quick hack to detect invalid token and avoid retrying forever
+					log.Println(err)
+					time.Sleep(1 * time.Hour)
+				}
 				log.Fatal(err)
 			}
 			// log.Println("Discord Bot is now running.")
