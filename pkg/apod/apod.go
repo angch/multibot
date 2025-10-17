@@ -111,7 +111,7 @@ func ParseApod(body string) (*ApodPost, error) {
 			Description: description,
 		}, nil
 	}
-	return nil, fmt.Errorf("No title or url")
+	return nil, fmt.Errorf("no title or url")
 }
 
 func doYMD(y, m, d int) *ApodPost {
@@ -152,18 +152,27 @@ func Apod() {
 	// Let all the platforms get initialized first
 	time.Sleep(5 * time.Second)
 
+	var lastPostedDate string
+
 	for {
 		today := time.Now() // Yes, I know. timezone.
 		d := today.Day()
 		m := int(today.Month())
 		y := today.Year()
 		key := fmt.Sprintf("%04d%02d%02d", y, m, d)
-		_, exists := posts[key]
-		if exists {
+
+		// Check if we've already posted today (not just if the key exists in historical posts)
+		if lastPostedDate == key {
 			log.Println("Done for today")
 			time.Sleep(1 * time.Hour)
 			continue
 		}
+
+		yesterday := today.AddDate(0, 0, -1)
+		yd := yesterday.Day()
+		ym := int(yesterday.Month())
+		yy := yesterday.Year()
+		yesterdayKey := fmt.Sprintf("%04d%02d%02d", yy, ym, yd)
 
 		log.Printf("Doing %d %d %d\n", y, m, d)
 
@@ -184,10 +193,17 @@ func Apod() {
 			log.Printf("%+v\n", p)
 
 			text := fmt.Sprintf("%s %s", p.Text, p.ImageURL)
-			MessagePlatforms := GetMessagePlatforms()
-			for _, v := range MessagePlatforms {
-				v.SendWithOptions(text, bothandler.SendOptions{Silent: true})
+
+			if posts[yesterdayKey].ImageURL == p.ImageURL {
+				// text = fmt.Sprintf("%s (Same as yesterday)", text)
+				log.Println("Same as yesterday, not sending")
+			} else {
+				MessagePlatforms := GetMessagePlatforms()
+				for _, v := range MessagePlatforms {
+					v.SendWithOptions(text, bothandler.SendOptions{Silent: true})
+				}
 			}
+			lastPostedDate = key
 		}
 
 		log.Println("Sleeping 5 minutes")
