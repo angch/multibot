@@ -153,6 +153,17 @@ func Apod() {
 	time.Sleep(5 * time.Second)
 
 	var lastPostedDate string
+	var lastPostedImageURL string
+
+	// Initialize from historical data to prevent reposting on restart
+	today := time.Now()
+	todayKey := fmt.Sprintf("%04d%02d%02d", today.Year(), int(today.Month()), today.Day())
+	if existingPost, exists := posts[todayKey]; exists {
+		// We already have today's post in history, consider it posted
+		lastPostedDate = todayKey
+		lastPostedImageURL = existingPost.ImageURL
+		log.Printf("Found existing post for today %s, will not repost", todayKey)
+	}
 
 	for {
 		today := time.Now() // Yes, I know. timezone.
@@ -194,16 +205,24 @@ func Apod() {
 
 			text := fmt.Sprintf("%s %s", p.Text, p.ImageURL)
 
-			if posts[yesterdayKey].ImageURL == p.ImageURL {
-				// text = fmt.Sprintf("%s (Same as yesterday)", text)
-				log.Println("Same as yesterday, not sending")
+			// Check if this is the same image we last posted (could be from yesterday or earlier)
+			if lastPostedImageURL == p.ImageURL {
+				log.Printf("Same image as last posted (%s), not sending", lastPostedImageURL)
 			} else {
-				MessagePlatforms := GetMessagePlatforms()
-				for _, v := range MessagePlatforms {
-					v.SendWithOptions(text, bothandler.SendOptions{Silent: true})
+				// Also check yesterday's post if it exists
+				yesterdayPost, yesterdayExists := posts[yesterdayKey]
+				if yesterdayExists && yesterdayPost.ImageURL == p.ImageURL {
+					log.Printf("Same image as yesterday (%s), not sending", yesterdayKey)
+				} else {
+					MessagePlatforms := GetMessagePlatforms()
+					for _, v := range MessagePlatforms {
+						v.SendWithOptions(text, bothandler.SendOptions{Silent: true})
+					}
+					log.Printf("Sent new image: %s", p.ImageURL)
 				}
 			}
 			lastPostedDate = key
+			lastPostedImageURL = p.ImageURL
 		}
 
 		log.Println("Sleeping 5 minutes")
