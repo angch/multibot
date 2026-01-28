@@ -19,10 +19,10 @@ func EchoHandler(request bothandler.Request) string {
 	}
 
 	for _, v := range fragments {
-		a := strings.ToLower(v.From)
-
+		// Use pre-computed lowercase (v.fromLower) to avoid repeated ToLower calls
+		// Performance: eliminates O(len(From)) work per fragment per message
 		c := false
-		if a == v.From { // All lower
+		if v.fromLower == v.From { // All lower - can match against lowercase input
 			c = strings.Contains(i, v.From)
 		} else {
 			c = strings.Contains(request.Content, v.From)
