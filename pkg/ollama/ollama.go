@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/angch/multibot/pkg/bothandler"
@@ -22,7 +23,9 @@ type Server struct {
 var server *Server
 
 var triggerWord = "!oll"
-var model = "gemma3:12b-it-qat"
+
+// var model = "gemma3:12b-it-qat"
+var model = "qwen3:8b"
 
 func NewOllamaServer(urlstring string) *Server {
 	if urlstring == "" {
@@ -126,104 +129,77 @@ var trims = []string{
 	"</end_of_turn>",
 }
 
+var (
+	thinkRe    = regexp.MustCompile(`(?s)<think>.*?</think>`)
+	thinkingRe = regexp.MustCompile(`(?s)<thinking>.*?</thinking>`)
+)
+
+func selectSystemMsg(input string) (ollamaapi.Message, string) {
+	if after, ok := strings.CutPrefix(input, triggerWord); ok {
+		return systemMsg, strings.TrimSpace(after)
+	}
+	switch {
+	case strings.Contains(input, "demurebot"):
+		return demureBotMsg, input
+	case strings.Contains(input, "angrybot"):
+		return angryBotMsg, input
+	case strings.Contains(input, "depressedbot"):
+		return depressedBotMsg, input
+	case strings.Contains(input, "murderbot"):
+		return systemMsg2, input
+	default:
+		return ollamaapi.Message{}, ""
+	}
+}
+
+func cleanContent(content string) string {
+	content = thinkRe.ReplaceAllString(content, "")
+	content = thinkingRe.ReplaceAllString(content, "")
+	for _, trim := range trims {
+		content = strings.ReplaceAll(content, trim, "")
+	}
+	return strings.TrimSpace(content)
+}
+
 func OllamaCatchallHandler(request bothandler.Request) string {
 	log.Println("OllamaCatchallHandler called with request:", request)
-	i := strings.ToLower(request.Content)
 
-	localsystemmsg := systemMsg
-	if after, ok := strings.CutPrefix(i, triggerWord); ok {
-		i = after
-		i = strings.TrimSpace(i)
-	} else {
-		if !strings.Contains(i, "murderbot") && !strings.Contains(i, "demurebot") && !strings.Contains(i, "angrybot") && !strings.Contains(i, "depressedbot") {
-			return ""
-		}
-
-		if strings.Contains(i, "demurebot") {
-			localsystemmsg = demureBotMsg
-		} else if strings.Contains(i, "angrybot") {
-			localsystemmsg = angryBotMsg
-		} else if strings.Contains(i, "depressedbot") {
-			localsystemmsg = depressedBotMsg
-		} else {
-			localsystemmsg = systemMsg2
-		}
-	}
-	if i == "" {
+	sysMsg, query := selectSystemMsg(strings.ToLower(request.Content))
+	if query == "" {
 		return ""
 	}
-	log.Printf("OllamaCatchallHandler input: %s\n", i)
+	log.Printf("OllamaCatchallHandler input: %s\n", query)
 
 	if server == nil || server.Client == nil {
 		log.Println("OllamaCatchallHandler: client is nil")
 		return ""
 	}
-	client := server.Client
 
-	msg := ollamaapi.Message{
-		Role:    "user",
-		Content: i,
-	}
 	stream := false
 	req := &ollamaapi.ChatRequest{
 		Model:    model,
-		Messages: []ollamaapi.Message{localsystemmsg, msg},
+		Messages: []ollamaapi.Message{sysMsg, {Role: "user", Content: query}},
 		Stream:   &stream,
 	}
-	// ret := ""
-	ctx := context.Background()
-
-	respChan := make(chan ollamaapi.ChatResponse)
-	defer close(respChan)
-
-	respFunc := func(resp ollamaapi.ChatResponse) error {
-		for _, trim := range trims {
-			resp.Message.Content = strings.ReplaceAll(resp.Message.Content, trim, "")
-			resp.Message.Content = strings.TrimSpace(resp.Message.Content)
-		}
-
-		log.Printf("ollama.Chat response: %v\n", resp)
-		respChan <- resp
-		return nil
-	}
-	// Chat generates the next message in a chat.
-	// ChatRequest may contain a sequence of messages which can be used to maintain chat history with a model.
-	// fn is called for each response (there may be multiple responses, e.g. if case streaming is enabled).
 	log.Printf("ollama.Chat called with request: Model=%s, Messages=%+v, Stream=%v\n", req.Model, req.Messages, *req.Stream)
-	go func() {
-		err := client.Chat(ctx, req, respFunc)
-		log.Println("ollama.Chat completed")
-		if err != nil {
-			log.Printf("ollama.Chat error: %v\n", err)
-			if strings.HasPrefix(err.Error(), "unmarshal") {
-				respChan <- ollamaapi.ChatResponse{
-					Message: ollamaapi.Message{
-						Role:    "assistant",
-						Content: "Zzzz murderbot is asleep now",
-					},
-				}
-				return
-			}
-			if false {
-				respChan <- ollamaapi.ChatResponse{
-					Message: ollamaapi.Message{
-						Role:    "assistant",
-						Content: "Error: " + err.Error(),
-					},
-				}
-			}
-			return
-		}
-	}()
 
-	select {
-	case <-ctx.Done():
-		log.Printf("ollama.Chat context done: %v\n", ctx.Err())
+	var result string
+	err := server.Client.Chat(context.Background(), req, func(resp ollamaapi.ChatResponse) error {
+		result = cleanContent(resp.Message.Content)
+		log.Printf("ollama.Chat response: %v\n", resp)
+		return nil
+	})
+	log.Println("ollama.Chat completed")
+	if err != nil {
+		log.Printf("ollama.Chat error: %v\n", err)
+		if strings.HasPrefix(err.Error(), "unmarshal") {
+			return "Zzzz murderbot is asleep now"
+		}
 		return ""
-	case resp := <-respChan: // wait for the first response)
-		log.Printf("ollama.Chat response received: %v\n", resp)
-		return resp.Message.Content
 	}
+
+	log.Printf("ollama.Chat response content after trimming: %s\n", result)
+	return result
 }
 
 func init() {
