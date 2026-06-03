@@ -9,10 +9,20 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/angch/multibot/pkg/engineersmy"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
+
+type mediaGroupEntry struct {
+	chatID    int64
+	replyToID int
+	caption   string
+	from      string
+	filenames []string
+	timer     *time.Timer
+}
 
 // Implements MessagePlatform
 type TelegramMessagePlatform struct {
@@ -21,6 +31,8 @@ type TelegramMessagePlatform struct {
 	KnownUsers     map[string]tgbotapi.User
 	KnownUsersLock sync.RWMutex
 	DefaultChannel string
+	mediaGroupsMu  sync.Mutex
+	mediaGroups    map[string]*mediaGroupEntry
 	// Me             *tgbotapi.User // Superflous, get it from Client.Self
 }
 
@@ -32,9 +44,10 @@ func NewMessagePlatformFromTelegram(telegrambottoken string) (*TelegramMessagePl
 	log.Printf("Connected to Telegram on account %s", bot.Self.UserName)
 
 	return &TelegramMessagePlatform{
-		Client:     bot,
-		ChannelId:  map[string]string{},
-		KnownUsers: map[string]tgbotapi.User{},
+		Client:      bot,
+		ChannelId:   map[string]string{},
+		KnownUsers:  map[string]tgbotapi.User{},
+		mediaGroups: map[string]*mediaGroupEntry{},
 	}, nil
 }
 
@@ -133,57 +146,56 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 		m := update.Message
 
 		if m.Photo != nil {
-			// log.Printf("photo %+v\n", m)
-			// FIXME: Actual exec path never goes through here.
-			// targetPixels := 512 * 512
-			targetPixels := 1024 * 1024
-			best := &tgbotapi.PhotoSize{}
-			bestSize := 100_000_000
-
-			for _, v := range *m.Photo {
-				pixels := v.Height * v.Width
-				diff := targetPixels - pixels
-				if diff < 0 {
-					diff = -diff
-				}
-				if diff < bestSize {
-					bestSize = diff
-					best = &v
-				}
-			}
-
-			// Nah, pick the biggest
-			biggestSoFar := 0
-			for k, v := range *m.Photo {
-				if v.FileSize > biggestSoFar {
-					biggestSoFar = v.FileSize
-					best = &v
-				}
-				_ = k
-				// log.Printf("photo %v %+v\n", k, v)
-			}
-
 			debug, _ := json.Marshal(update)
 			log.Printf("message %+v\n", string(debug))
-			// FIXME:
-			filename := "tmp/" + best.FileID
-			err := s.botDownload(best.FileID, filename)
-			if err != nil {
-				log.Println(err)
-			}
-			for _, v := range ImageHandlers {
-				// log.Printf("image handlers %+v\n", m)
-				c := content
-				if c == "" {
-					c = m.Caption
+
+			// Pick the largest photo size.
+			biggestSoFar := 0
+			var best tgbotapi.PhotoSize
+			for _, v := range *m.Photo {
+				if v.FileSize > biggestSoFar {
+					biggestSoFar = v.FileSize
+					best = v
 				}
-				r := v(filename, Request{c, "telegram", "", ""})
-				if r != "" {
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, r)
-					msg.ReplyToMessageID = update.Message.MessageID
-					_, err := s.Client.Send(msg)
-					if err != nil {
-						log.Println(err)
+			}
+
+			filename := "tmp/" + best.FileID
+			if err := s.botDownload(best.FileID, filename); err != nil {
+				log.Println(err)
+				continue
+			}
+
+			caption := content
+			if caption == "" {
+				caption = m.Caption
+			}
+			chatIDStr := fmt.Sprintf("%d", m.Chat.ID)
+
+			if m.MediaGroupID != "" {
+				// Album: buffer photos until they stop arriving, then dispatch.
+				key := fmt.Sprintf("%d_%s", m.Chat.ID, m.MediaGroupID)
+				s.bufferAlbumPhoto(key, filename, caption, m.From.UserName, m.Chat.ID, m.MessageID)
+			} else {
+				// Single image: call legacy single-file handlers and list handlers.
+				req := Request{caption, "telegram", chatIDStr, m.From.UserName}
+				for _, h := range ImageHandlers {
+					r := h(filename, req)
+					if r != "" {
+						msg := tgbotapi.NewMessage(m.Chat.ID, r)
+						msg.ReplyToMessageID = m.MessageID
+						if _, err := s.Client.Send(msg); err != nil {
+							log.Println(err)
+						}
+					}
+				}
+				for _, h := range ImageListHandlers {
+					r := h([]string{filename}, req)
+					if r != "" {
+						msg := tgbotapi.NewMessage(m.Chat.ID, r)
+						msg.ReplyToMessageID = m.MessageID
+						if _, err := s.Client.Send(msg); err != nil {
+							log.Println(err)
+						}
 					}
 				}
 			}
@@ -223,6 +235,55 @@ func (s *TelegramMessagePlatform) botDownload(fileId string, localFilename strin
 		return err
 	}
 	return nil
+}
+
+// bufferAlbumPhoto accumulates photos from a Telegram media group (album).
+// It resets a 800 ms timer on each arrival; when the timer fires all buffered
+// filenames are dispatched to ImageListHandlers in one call.
+func (s *TelegramMessagePlatform) bufferAlbumPhoto(key, filename, caption, from string, chatID int64, replyToID int) {
+	s.mediaGroupsMu.Lock()
+	defer s.mediaGroupsMu.Unlock()
+
+	entry, exists := s.mediaGroups[key]
+	if !exists {
+		entry = &mediaGroupEntry{
+			chatID:    chatID,
+			replyToID: replyToID,
+			from:      from,
+		}
+		s.mediaGroups[key] = entry
+	}
+	entry.filenames = append(entry.filenames, filename)
+	if caption != "" && entry.caption == "" {
+		entry.caption = caption
+	}
+
+	if entry.timer != nil {
+		entry.timer.Stop()
+	}
+	captured := entry
+	entry.timer = time.AfterFunc(800*time.Millisecond, func() {
+		s.mediaGroupsMu.Lock()
+		delete(s.mediaGroups, key)
+		s.mediaGroupsMu.Unlock()
+
+		req := Request{
+			Content:  captured.caption,
+			Platform: "telegram",
+			Channel:  fmt.Sprintf("%d", captured.chatID),
+			From:     captured.from,
+		}
+		for _, h := range ImageListHandlers {
+			r := h(captured.filenames, req)
+			if r != "" {
+				msg := tgbotapi.NewMessage(captured.chatID, r)
+				msg.ReplyToMessageID = captured.replyToID
+				if _, err := s.Client.Send(msg); err != nil {
+					log.Println(err)
+				}
+			}
+		}
+	})
 }
 
 func (s *TelegramMessagePlatform) Send(text string) {

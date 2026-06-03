@@ -23,6 +23,7 @@ type MessageHandler func() string
 type MessageWithInputHandler func(Request) string
 type CatchallHandler func(Request) string
 type ImageHandler func(string, Request) string
+type ImageListHandler func([]string, Request) string
 
 type SendOptions struct {
 	Silent bool
@@ -49,6 +50,7 @@ var MsgInputHandlers = map[string]MessageWithInputHandler{}
 var CatchallHandlers = []CatchallHandler{}
 var CatchallExtendedHandlers = []CatchallExtendedHandler{}
 var ImageHandlers = []ImageHandler{}
+var ImageListHandlers = []ImageListHandler{}
 var AddMessagePlatforms = []AddMessagePlatform{}
 var ActiveMessagePlatforms = []MessagePlatform{}
 
@@ -69,6 +71,10 @@ func RegisterCatchallExtendeHandler(h CatchallExtendedHandler) {
 
 func RegisterImageHandler(h ImageHandler) {
 	ImageHandlers = append(ImageHandlers, h)
+}
+
+func RegisterImageListHandler(h ImageListHandler) {
+	ImageListHandlers = append(ImageListHandlers, h)
 }
 
 func RegisterMessagePlatform(m MessagePlatform) {
