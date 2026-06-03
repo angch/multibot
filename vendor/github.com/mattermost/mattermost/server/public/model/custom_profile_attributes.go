@@ -1,6 +1,12 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
+// This file implements the "User Attributes" feature, formerly known as
+// "Custom Profile Attributes" (CPA). Internal identifiers retain the old
+// naming for backward compatibility with REST APIs, WebSocket events,
+// JSON wire formats, and the Property System Architecture (PSA) group name
+// "custom_profile_attributes". See MM-68235.
+
 package model
 
 import (
@@ -9,33 +15,22 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 const CustomProfileAttributesPropertyGroupName = "custom_profile_attributes"
 
-func CPASortOrder(p *PropertyField) int {
-	value, ok := p.Attrs[CustomProfileAttributesPropertyAttrsSortOrder]
-	if !ok {
-		return 0
-	}
-
-	sortOrder, ok := value.(float64)
-	if !ok {
-		return 0
-	}
-
-	return int(sortOrder)
-}
-
 const (
 	// Attributes keys
-	CustomProfileAttributesPropertyAttrsSortOrder  = "sort_order"
-	CustomProfileAttributesPropertyAttrsValueType  = "value_type"
-	CustomProfileAttributesPropertyAttrsVisibility = "visibility"
-	CustomProfileAttributesPropertyAttrsLDAP       = "ldap"
-	CustomProfileAttributesPropertyAttrsSAML       = "saml"
-	CustomProfileAttributesPropertyAttrsManaged    = "managed"
+	CustomProfileAttributesPropertyAttrsSortOrder   = "sort_order"
+	CustomProfileAttributesPropertyAttrsValueType   = "value_type"
+	CustomProfileAttributesPropertyAttrsVisibility  = "visibility"
+	CustomProfileAttributesPropertyAttrsLDAP        = "ldap"
+	CustomProfileAttributesPropertyAttrsSAML        = "saml"
+	CustomProfileAttributesPropertyAttrsManaged     = "managed"
+	CustomProfileAttributesPropertyAttrsDisplayName = "display_name"
 
 	// Value Types
 	CustomProfileAttributesValueTypeEmail = "email"
@@ -76,6 +71,51 @@ func IsKnownCPAVisibility(visibility string) bool {
 	}
 
 	return false
+}
+
+// CPAFieldNamePattern defines the character set allowed for CPA field names.
+// Matches the CEL IDENTIFIER grammar (^[A-Za-z_][A-Za-z0-9_]*$) used by the
+// ABAC engine (cel-go v0.27.0). Leading underscore is permitted — this is consistent
+// with both the CEL grammar and the enterprise unparser (identifierPartPattern in
+// access_control/cel_utils/normalizer.go).
+var CPAFieldNamePattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+
+// CPAFieldNameReservedWords is the set of CEL keywords that cannot be used as CPA
+// field names. Bare use of these tokens in member-select position (e.g.
+// user.attributes.in) either fails CEL parse or requires backtick quoting that
+// the ABAC visual builder (ToCEL) does not currently emit.
+//
+// List sourced from cel-go v0.27.0 CEL.g4 lexer rules.
+// Grouped: literals (true/false/null), operator-keywords (in/as), then alphabetical reserved keywords.
+var CPAFieldNameReservedWords = map[string]struct{}{
+	"true": {}, "false": {}, "null": {},
+	"in": {}, "as": {},
+	"break": {}, "const": {}, "continue": {}, "else": {},
+	"for": {}, "function": {}, "if": {}, "import": {},
+	"let": {}, "loop": {}, "package": {}, "namespace": {},
+	"return": {}, "var": {}, "void": {}, "while": {},
+}
+
+func ValidateCPAFieldName(name string) *AppError {
+	if !CPAFieldNamePattern.MatchString(name) {
+		return NewAppError(
+			"ValidateCPAFieldName",
+			"model.cpa_field.name.invalid_charset.app_error",
+			map[string]any{"Name": name},
+			"",
+			http.StatusUnprocessableEntity,
+		)
+	}
+	if _, reserved := CPAFieldNameReservedWords[name]; reserved {
+		return NewAppError(
+			"ValidateCPAFieldName",
+			"model.cpa_field.name.reserved_word.app_error",
+			map[string]any{"Name": name},
+			"",
+			http.StatusUnprocessableEntity,
+		)
+	}
+	return nil
 }
 
 type CustomProfileAttributesSelectOption struct {
@@ -125,14 +165,31 @@ type CPAField struct {
 	Attrs CPAAttrs `json:"attrs"`
 }
 
+// CPAAttrs holds the typed attributes for a CPA (Custom Profile Attributes) field.
+//
+// # CEL-safe-identifier validation for Name
+//
+// CPA field names double as identifiers in ABAC CEL policy expressions of the form
+// user.attributes.<name>. To be valid in that position without backtick quoting,
+// Name must satisfy [CPAFieldNamePattern] (^[A-Za-z_][A-Za-z0-9_]*$) and must not
+// appear in [CPAFieldNameReservedWords].
+//
+// # DisplayName
+//
+// DisplayName carries the user-facing label (e.g. "Department Head") separately
+// from Name (the CEL identifier, e.g. "department_head").
 type CPAAttrs struct {
-	Visibility string                                                `json:"visibility"`
-	SortOrder  float64                                               `json:"sort_order"`
-	Options    PropertyOptions[*CustomProfileAttributesSelectOption] `json:"options"`
-	ValueType  string                                                `json:"value_type"`
-	LDAP       string                                                `json:"ldap"`
-	SAML       string                                                `json:"saml"`
-	Managed    string                                                `json:"managed"`
+	Visibility     string                                                `json:"visibility"`
+	SortOrder      float64                                               `json:"sort_order"`
+	Options        PropertyOptions[*CustomProfileAttributesSelectOption] `json:"options"`
+	ValueType      string                                                `json:"value_type"`
+	LDAP           string                                                `json:"ldap"`
+	SAML           string                                                `json:"saml"`
+	Managed        string                                                `json:"managed"`
+	Protected      bool                                                  `json:"protected"`
+	SourcePluginID string                                                `json:"source_plugin_id"`
+	AccessMode     string                                                `json:"access_mode"`
+	DisplayName    string                                                `json:"display_name,omitempty"` // omitempty applies only to direct JSON marshal of CPAAttrs; ToPropertyField always writes the key into the underlying StringInterface map.
 }
 
 func (c *CPAField) IsSynced() bool {
@@ -143,17 +200,54 @@ func (c *CPAField) IsAdminManaged() bool {
 	return c.Attrs.Managed == "admin"
 }
 
+// SetDefaults sets default values for CPAField attributes
+func (c *CPAField) SetDefaults() {
+	if c.Attrs.Visibility == "" {
+		c.Attrs.Visibility = CustomProfileAttributesVisibilityDefault
+	}
+}
+
+// Patch applies a PropertyFieldPatch to the CPAField by converting to PropertyField,
+// applying the patch, and converting back. This ensures we only maintain one patch logic path.
+// Custom profile attributes doesn't use targets, so TargetID and TargetType are cleared.
+func (c *CPAField) Patch(patch *PropertyFieldPatch) error {
+	// Custom profile attributes doesn't use targets
+	patch.TargetID = nil
+	patch.TargetType = nil
+
+	// Convert to PropertyField
+	pf := c.ToPropertyField()
+
+	// Apply the patch using PropertyField's patch logic
+	pf.Patch(patch, false)
+
+	// Convert back to CPAField
+	patched, err := NewCPAFieldFromPropertyField(pf)
+	if err != nil {
+		return err
+	}
+
+	// Update the current CPAField with patched values
+	*c = *patched
+
+	return nil
+}
+
 func (c *CPAField) ToPropertyField() *PropertyField {
 	pf := c.PropertyField
 
 	pf.Attrs = StringInterface{
-		CustomProfileAttributesPropertyAttrsVisibility: c.Attrs.Visibility,
-		CustomProfileAttributesPropertyAttrsSortOrder:  c.Attrs.SortOrder,
-		CustomProfileAttributesPropertyAttrsValueType:  c.Attrs.ValueType,
-		PropertyFieldAttributeOptions:                  c.Attrs.Options,
-		CustomProfileAttributesPropertyAttrsLDAP:       c.Attrs.LDAP,
-		CustomProfileAttributesPropertyAttrsSAML:       c.Attrs.SAML,
-		CustomProfileAttributesPropertyAttrsManaged:    c.Attrs.Managed,
+		CustomProfileAttributesPropertyAttrsVisibility:  c.Attrs.Visibility,
+		CustomProfileAttributesPropertyAttrsSortOrder:   c.Attrs.SortOrder,
+		CustomProfileAttributesPropertyAttrsValueType:   c.Attrs.ValueType,
+		PropertyFieldAttributeOptions:                   c.Attrs.Options,
+		CustomProfileAttributesPropertyAttrsLDAP:        c.Attrs.LDAP,
+		CustomProfileAttributesPropertyAttrsSAML:        c.Attrs.SAML,
+		CustomProfileAttributesPropertyAttrsManaged:     c.Attrs.Managed,
+		PropertyAttrsProtected:                          c.Attrs.Protected,
+		PropertyAttrsSourcePluginID:                     c.Attrs.SourcePluginID,
+		PropertyAttrsAccessMode:                         c.Attrs.AccessMode,
+		CustomProfileAttributesPropertyAttrsDisplayName: c.Attrs.DisplayName,
 	}
 
 	return &pf
@@ -172,6 +266,8 @@ func (c *CPAField) SupportsSyncing() bool {
 }
 
 func (c *CPAField) SanitizeAndValidate() *AppError {
+	c.SetDefaults()
+
 	// first we clean unused attributes depending on the field type
 	if !c.SupportsOptions() {
 		c.Attrs.Options = nil
@@ -218,7 +314,7 @@ func (c *CPAField) SanitizeAndValidate() *AppError {
 		c.Attrs.Options = options
 	}
 
-	visibility := CustomProfileAttributesVisibilityDefault
+	// Validate visibility
 	if visibilityAttr := strings.TrimSpace(c.Attrs.Visibility); visibilityAttr != "" {
 		if !IsKnownCPAVisibility(visibilityAttr) {
 			return NewAppError("SanitizeAndValidate", "app.custom_profile_attributes.sanitize_and_validate.app_error", map[string]any{
@@ -226,9 +322,8 @@ func (c *CPAField) SanitizeAndValidate() *AppError {
 				"Reason":        "unknown visibility",
 			}, "", http.StatusUnprocessableEntity)
 		}
-		visibility = visibilityAttr
+		c.Attrs.Visibility = visibilityAttr
 	}
-	c.Attrs.Visibility = visibility
 
 	// Validate managed field
 	if managed := strings.TrimSpace(c.Attrs.Managed); managed != "" {
@@ -239,6 +334,15 @@ func (c *CPAField) SanitizeAndValidate() *AppError {
 			}, "", http.StatusBadRequest)
 		}
 		c.Attrs.Managed = managed
+	}
+
+	// Sanitize and validate display_name
+	// Reuses PropertyFieldNameMaxRunes to keep the DisplayName cap aligned with the Name cap; do NOT introduce a separate constant.
+	c.Attrs.DisplayName = strings.TrimSpace(c.Attrs.DisplayName)
+	if utf8.RuneCountInString(c.Attrs.DisplayName) > PropertyFieldNameMaxRunes {
+		return NewAppError("SanitizeAndValidate", "app.custom_profile_attributes.sanitize_and_validate.display_name_too_long.app_error", map[string]any{
+			"MaxRunes": PropertyFieldNameMaxRunes,
+		}, "", http.StatusUnprocessableEntity)
 	}
 
 	return nil
@@ -256,10 +360,14 @@ func NewCPAFieldFromPropertyField(pf *PropertyField) (*CPAField, error) {
 		return nil, err
 	}
 
-	return &CPAField{
+	cpaField := &CPAField{
 		PropertyField: *pf,
 		Attrs:         attrs,
-	}, nil
+	}
+
+	cpaField.SetDefaults()
+
+	return cpaField, nil
 }
 
 // SanitizeAndValidatePropertyValue validates and sanitizes the given
