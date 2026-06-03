@@ -138,10 +138,16 @@ func compactFile(key string) {
 	}
 
 	var sb strings.Builder
-	sb.WriteString(summaryStartMarker + "\n")
-	sb.WriteString(combined + "\n")
-	sb.WriteString(summaryEndMarker + "\n")
-	sb.WriteString(strings.Join(toKeep, "\n"))
+	sb.WriteString(summaryStartMarker)
+	sb.WriteString("\n")
+	sb.WriteString(combined)
+	sb.WriteString("\n")
+	sb.WriteString(summaryEndMarker)
+	sb.WriteString("\n")
+	for _, line := range toKeep {
+		sb.WriteString(line)
+		sb.WriteString("\n")
+	}
 
 	tmpPath := path + ".tmp"
 	if err := os.WriteFile(tmpPath, []byte(sb.String()), 0600); err != nil {
