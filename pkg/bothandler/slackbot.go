@@ -2,6 +2,7 @@ package bothandler
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -21,14 +22,15 @@ type SlackMessagePlatform struct {
 	Me               *slack.AuthTestResponse
 	DefaultChannel   string
 	verbose          bool
+	cancel           context.CancelFunc
 }
 
 func NewMessagePlatformFromSlack(slackbottoken, slackapptoken string) (*SlackMessagePlatform, error) {
 	if !strings.HasPrefix(slackapptoken, "xapp-") {
-		fmt.Fprintf(os.Stderr, "SLACK_APP_TOKEN must have the prefix \"xapp-\".")
+		return nil, fmt.Errorf("SLACK_APP_TOKEN must have the prefix \"xapp-\"")
 	}
 	if !strings.HasPrefix(slackbottoken, "xoxb-") {
-		fmt.Fprintf(os.Stderr, "SLACK_BOT_TOKEN must have the prefix \"xoxb-\".")
+		return nil, fmt.Errorf("SLACK_BOT_TOKEN must have the prefix \"xoxb-\"")
 	}
 
 	client := slack.New(
@@ -53,22 +55,25 @@ func NewMessagePlatformFromSlack(slackbottoken, slackapptoken string) (*SlackMes
 		socketmode.OptionLog(log.New(os.Stdout, "socketmode: ", log.Lshortfile|log.LstdFlags)),
 	)
 
-	params := slack.GetConversationsParameters{}
-	conversations, next, err := client.GetConversations(&params)
-	if err != nil {
-		log.Println("Can't get conversation")
-		return nil, err
-	}
-	// log.Println(conversations)
 	channelid := make(map[string]string)
-	for _, v := range conversations {
-		// log.Println(v.ID, "is", v.IsChannel, v.Name)
-		if v.IsChannel {
-			channelid[v.Name] = v.ID
+	params := slack.GetConversationsParameters{}
+	for {
+		conversations, next, err := client.GetConversations(&params)
+		if err != nil {
+			log.Println("Can't get conversation")
+			return nil, err
 		}
+		for _, v := range conversations {
+			// log.Println(v.ID, "is", v.IsChannel, v.Name)
+			if v.IsChannel {
+				channelid[v.Name] = v.ID
+			}
+		}
+		if next == "" {
+			break
+		}
+		params.Cursor = next
 	}
-	_ = next
-	// log.Println(next)
 
 	return &SlackMessagePlatform{
 		Client:           client,
@@ -137,8 +142,7 @@ func (s *SlackMessagePlatform) ProcessMessages() {
 
 						// Can be better to decouple 1 to 1 of message : response
 						for _, v := range CatchallHandlers {
-							// FIXME
-							r := v(Request{content, "slack", "", ""})
+							r := v(Request{content, "slack", ev.Channel, ev.User})
 							if r != "" {
 								_, _, err := s.Client.PostMessage(ev.Channel, slack.MsgOptionText(r, false))
 								if err != nil {
@@ -168,15 +172,15 @@ func (s *SlackMessagePlatform) ProcessMessages() {
 									// FIXME: better sanitization
 									filename := strings.ReplaceAll(strings.ToLower(strings.Join(words, " ")), " ", "_") + ".png"
 
-									fileuploadparams := slack.FileUploadParameters{
+									fileuploadparams := slack.UploadFileV2Parameters{
 										Reader:          bytes.NewBuffer(r.Image),
+										FileSize:        len(r.Image),
 										Filename:        filename,
 										Title:           r.Text,
-										Channels:        []string{ev.Channel},
-										Filetype:        "image/png",
+										Channel:         ev.Channel,
 										ThreadTimestamp: ev.ThreadTimeStamp,
 									}
-									file, err := s.Client.UploadFile(fileuploadparams)
+									file, err := s.Client.UploadFileV2(fileuploadparams)
 									if err != nil {
 										log.Println(err)
 									} else {
@@ -185,19 +189,12 @@ func (s *SlackMessagePlatform) ProcessMessages() {
 								}
 							}
 						}
-						sliced_content := strings.SplitN(content, " ", 2)
-						if len(sliced_content) > 1 {
-							command := sliced_content[0]
-							actual_content := sliced_content[1]
-
-							ih, ok := MsgInputHandlers[command]
-							if ok {
-								response := ih(Request{actual_content, "slack", "", ""})
-								if response != "" {
-									_, _, err := s.Client.PostMessage(ev.Channel, slack.MsgOptionText(response, false))
-									if err != nil {
-										log.Println(err)
-									}
+						if ih, actual_content, ok := GetMsgInputHandler(content); ok {
+							response := ih(Request{actual_content, "slack", ev.Channel, ev.User})
+							if response != "" {
+								_, _, err := s.Client.PostMessage(ev.Channel, slack.MsgOptionText(response, false))
+								if err != nil {
+									log.Println(err)
 								}
 							}
 						}
@@ -272,9 +269,11 @@ func (s *SlackMessagePlatform) ProcessMessages() {
 			}
 		}
 	}()
-	err := client.Run()
+	ctx, cancel := context.WithCancel(context.Background())
+	s.cancel = cancel
+	err := client.RunContext(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 }
 
@@ -296,6 +295,9 @@ func (s *SlackMessagePlatform) SendWithOptions(text string, options SendOptions)
 }
 
 func (s *SlackMessagePlatform) Close() {
+	if s.cancel != nil {
+		s.cancel()
+	}
 }
 
 func (s *SlackMessagePlatform) ChannelMessageSend(channel, message string) error {

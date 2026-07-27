@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/angch/multibot/pkg/engineersmy"
@@ -42,6 +41,10 @@ func NewMessagePlatformFromDiscord(discordtoken string) (*DiscordMessagePlatform
 		log.Printf("Connected to Discord on account %s", me.Username)
 	}
 
+	if err := os.MkdirAll("tmp", 0o755); err != nil {
+		log.Println(err)
+	}
+
 	return &DiscordMessagePlatform{
 		Session:  dg,
 		Channels: engineersmy.KnownDiscordChannels,
@@ -63,40 +66,20 @@ func (dg *DiscordMessagePlatform) SendWithOptions(text string, options SendOptio
 		return
 	}
 
-	for len(text) > 0 {
-		text2 := text
-		delay := time.Duration(0)
-
-		if len(text) > breaklength {
-			// Find whitespace at 2000
-			spaceIndex := strings.LastIndex(text[:breaklength], " ")
-			if spaceIndex != -1 {
-				text2 = text[:spaceIndex]
-				text = text[spaceIndex+1:]
-			} else if len(text) > breaklength {
-				// If no whitespace, just cut it off
-				// This is a hacky way to avoid sending too long messages
-				text2 = text[:breaklength]
-				text = text[breaklength:]
-			}
-			delay = time.Duration(200) * time.Millisecond
-		} else {
-			text = ""
+	chunks := splitMessage(text, breaklength)
+	for i, text2 := range chunks {
+		if i > 0 {
+			time.Sleep(200 * time.Millisecond)
 		}
 
+		msg := &discordgo.MessageSend{Content: text2}
 		if options.Silent {
-			// FIXME: Figuure out how to use ChannelMessageSendComplex to send silent messages
-			_, err := dg.Session.ChannelMessageSend(dg.Channels[""], text2)
-			if err != nil {
-				log.Println(err)
-			}
-		} else {
-			_, err := dg.Session.ChannelMessageSend(dg.Channels[""], text2)
-			if err != nil {
-				log.Println(err)
-			}
+			msg.Flags = discordgo.MessageFlagsSuppressNotifications
 		}
-		time.Sleep(delay)
+		_, err := dg.Session.ChannelMessageSendComplex(dg.Channels[""], msg)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 }
 
@@ -126,25 +109,10 @@ func discordMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			username = m.Author.Username
 		}
 		r := v(Request{m.Content, "discord", m.ChannelID, username})
-		for r != "" {
-			r2 := r
-			delay := time.Duration(0)
-			if len(r) > breaklength {
-				// Find whitespace at 2000
-				spaceIndex := strings.LastIndex(r[:breaklength], " ")
-				if spaceIndex != -1 {
-					r2 = r[:spaceIndex]
-					r = r[spaceIndex+1:]
-				} else if len(r) > breaklength {
-					// If no whitespace, just cut it off
-					r2 = r[:breaklength]
-					r = r[breaklength:]
-				}
-				delay = time.Duration(200) * time.Millisecond
-			} else {
-				r = ""
+		for i, r2 := range splitMessage(r, breaklength) {
+			if i > 0 {
+				time.Sleep(200 * time.Millisecond)
 			}
-
 			_, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
 				Content:   r2,
 				Reference: m.Reference(),
@@ -152,8 +120,6 @@ func discordMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if err != nil {
 				log.Println(err)
 			}
-
-			time.Sleep(delay)
 		}
 	}
 
@@ -189,27 +155,20 @@ func discordMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 
-	sliced_content := strings.SplitN(m.Content, " ", 2)
-	if len(sliced_content) > 1 {
-		command := sliced_content[0]
-		actual_content := sliced_content[1]
-
+	if ih, actual_content, ok := GetMsgInputHandler(m.Content); ok {
 		username := ""
 		if m.Author != nil {
 			username = m.Author.Username
 		}
 
-		ih, ok := MsgInputHandlers[command]
-		if ok {
-			response := ih(Request{actual_content, "discord", m.ChannelID, username})
-			if response != "" {
-				_, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
-					Content:   response,
-					Reference: m.Reference(),
-				})
-				if err != nil {
-					log.Println(err)
-				}
+		response := ih(Request{actual_content, "discord", m.ChannelID, username})
+		if response != "" {
+			_, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
+				Content:   response,
+				Reference: m.Reference(),
+			})
+			if err != nil {
+				log.Println(err)
 			}
 		}
 	}
@@ -232,34 +191,37 @@ func discordMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				bestSize = diff
 				best = v
 			}
+		}
+
+		if best.ID != "" {
 			log.Printf("photosize %+v\n", best)
-			// FIXME:
 			filename := "tmp/" + best.ID
 			err := botDownload(best, filename)
 			if err != nil {
 				log.Println(err)
-			}
-			for _, v := range ImageHandlers {
-				username := ""
-				if m.Author != nil {
-					username = m.Author.Username
-				}
+			} else {
+				for _, v := range ImageHandlers {
+					username := ""
+					if m.Author != nil {
+						username = m.Author.Username
+					}
 
-				req := Request{m.Content, "discord", m.ChannelID, username}
-				r := v(filename, req)
-				if r != "" {
-					_, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
-						Content:   r,
-						Reference: m.Reference(),
-					})
-					if err != nil {
-						log.Println(err)
+					req := Request{m.Content, "discord", m.ChannelID, username}
+					r := v(filename, req)
+					if r != "" {
+						_, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
+							Content:   r,
+							Reference: m.Reference(),
+						})
+						if err != nil {
+							log.Println(err)
+						}
 					}
 				}
-			}
 
-			if false {
-				os.Remove(filename)
+				if false {
+					os.Remove(filename)
+				}
 			}
 		}
 	}
@@ -295,12 +257,18 @@ func botDownload(attachment *discordgo.MessageAttachment, localFilename string) 
 	log.Println("Downloading", downloadUrl)
 
 	get, err := http.Get(downloadUrl)
-	if err != nil || get == nil || get.Body == nil {
+	if err != nil {
 		log.Println(err)
 		return err
 	}
+	if get == nil || get.Body == nil {
+		return fmt.Errorf("no response body from %s", downloadUrl)
+	}
 	reader := get.Body
 	defer reader.Close()
+	if get.StatusCode < 200 || get.StatusCode > 299 {
+		return fmt.Errorf("unexpected status %s from %s", get.Status, downloadUrl)
+	}
 
 	out, err := os.Create(localFilename)
 	if err != nil {

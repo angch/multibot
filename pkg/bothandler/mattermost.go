@@ -50,6 +50,10 @@ func NewMessagePlatformFromMattermost(mattermostBotToken, mattermostURL string) 
 
 	log.Printf("Connected to Mattermost on account %s", user.Username)
 
+	if err := os.MkdirAll("tmp", 0o755); err != nil {
+		log.Println(err)
+	}
+
 	// Get teams
 	teams, _, err := client.GetTeamsForUser(ctx, user.Id, "")
 	if err != nil {
@@ -86,44 +90,67 @@ func (s *MattermostMessagePlatform) ProcessMessages() {
 	headers := http.Header{}
 	headers.Set("Authorization", "Bearer "+s.BotToken)
 
-	conn, _, err := dialer.Dial(wsURL, headers)
-	if err != nil {
-		log.Printf("Failed to connect to WebSocket: %v", err)
-		return
-	}
-	s.WebSocketConn = conn
-	defer conn.Close()
-
-	// Send authentication message
-	authMsg := map[string]any{
-		"seq":    1,
-		"action": "authentication_challenge",
-		"data": map[string]string{
-			"token": s.BotToken,
-		},
-	}
-	if err := conn.WriteJSON(authMsg); err != nil {
-		log.Printf("Failed to send auth message: %v", err)
-		return
-	}
-
 	for {
 		select {
 		case <-s.stopChan:
 			return
 		default:
-			var event MattermostWebSocketEvent
-			err := conn.ReadJSON(&event)
-			if err != nil {
-				if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-					log.Println("WebSocket connection closed normally")
-					return
-				}
-				log.Printf("Failed to read WebSocket message: %v", err)
-				time.Sleep(5 * time.Second)
-				continue
+		}
+
+		conn, _, err := dialer.Dial(wsURL, headers)
+		if err != nil {
+			log.Printf("Failed to connect to WebSocket: %v", err)
+			select {
+			case <-s.stopChan:
+				return
+			case <-time.After(5 * time.Second):
 			}
-			s.handleWebSocketEvent(&event)
+			continue
+		}
+		s.WebSocketConn = conn
+
+		// Send authentication message
+		authMsg := map[string]any{
+			"seq":    1,
+			"action": "authentication_challenge",
+			"data": map[string]string{
+				"token": s.BotToken,
+			},
+		}
+		if err := conn.WriteJSON(authMsg); err != nil {
+			log.Printf("Failed to send auth message: %v", err)
+			conn.Close()
+			return
+		}
+
+	readloop:
+		for {
+			select {
+			case <-s.stopChan:
+				conn.Close()
+				return
+			default:
+				var event MattermostWebSocketEvent
+				err := conn.ReadJSON(&event)
+				if err != nil {
+					if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+						log.Println("WebSocket connection closed normally")
+						conn.Close()
+						return
+					}
+					// Tear down and re-dial on read errors.
+					log.Printf("Failed to read WebSocket message: %v", err)
+					conn.Close()
+					break readloop
+				}
+				s.handleWebSocketEvent(&event)
+			}
+		}
+
+		select {
+		case <-s.stopChan:
+			return
+		case <-time.After(5 * time.Second):
 		}
 	}
 }
@@ -195,17 +222,10 @@ func (s *MattermostMessagePlatform) handleWebSocketEvent(event *MattermostWebSoc
 	}
 
 	// Handle input commands (messages starting with a command)
-	sliced_content := strings.SplitN(content, " ", 2)
-	if len(sliced_content) > 1 {
-		command := sliced_content[0]
-		actual_content := sliced_content[1]
-
-		ih, ok := MsgInputHandlers[command]
-		if ok {
-			response := ih(Request{actual_content, "mattermost", post.ChannelId, post.UserId})
-			if response != "" {
-				s.sendReply(post.ChannelId, response, replyTo)
-			}
+	if ih, actual_content, ok := GetMsgInputHandler(content); ok {
+		response := ih(Request{actual_content, "mattermost", post.ChannelId, post.UserId})
+		if response != "" {
+			s.sendReply(post.ChannelId, response, replyTo)
 		}
 	}
 
@@ -222,7 +242,7 @@ func (s *MattermostMessagePlatform) handleWebSocketEvent(event *MattermostWebSoc
 			for _, v := range ImageHandlers {
 				r := v(filename, Request{content, "mattermost", post.ChannelId, post.UserId})
 				if r != "" {
-					s.sendReply(post.ChannelId, r, post.RootId)
+					s.sendReply(post.ChannelId, r, replyTo)
 				}
 			}
 
@@ -258,6 +278,12 @@ func (s *MattermostMessagePlatform) sendImageReply(channelId, message string, im
 	fileUploadResponse, _, err := s.Client.UploadFile(ctx, imageData, channelId, "image.png")
 	if err != nil {
 		log.Printf("Failed to upload image: %v", err)
+		// Fallback to text message
+		s.sendReply(channelId, message, rootId)
+		return
+	}
+	if fileUploadResponse == nil || len(fileUploadResponse.FileInfos) == 0 {
+		log.Println("Image upload returned no file infos")
 		// Fallback to text message
 		s.sendReply(channelId, message, rootId)
 		return

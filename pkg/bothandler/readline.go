@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/chzyer/readline"
 )
@@ -59,6 +58,9 @@ outer:
 			}
 		} else if err == io.EOF {
 			break
+		} else if err != nil {
+			log.Println(err)
+			break
 		}
 
 		content := line
@@ -68,17 +70,10 @@ outer:
 			fmt.Println("Bot says", response)
 		}
 
-		sliced_content := strings.SplitN(content, " ", 2)
-		if len(sliced_content) > 1 {
-			command := sliced_content[0]
-			actual_content := sliced_content[1]
-
-			ih, ok := MsgInputHandlers[command]
-			if ok {
-				response := ih(Request{actual_content, "readline", "", ""})
-				if response != "" {
-					fmt.Println("Bot says", response)
-				}
+		if ih, actual_content, ok := GetMsgInputHandler(content); ok {
+			response := ih(Request{actual_content, "readline", "", ""})
+			if response != "" {
+				fmt.Println("Bot says", response)
 			}
 		}
 

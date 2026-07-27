@@ -23,3 +23,45 @@ func Test_sanitizeFilename(t *testing.T) {
 		})
 	}
 }
+
+func Test_GetMsgInputHandler(t *testing.T) {
+	RegisterMessageWithInputHandler("!xkcd", func(r Request) string {
+		return "xkcd:" + r.Content
+	})
+	RegisterMessageWithInputHandler("!explainxkcd", func(r Request) string {
+		return "explain:" + r.Content
+	})
+
+	tests := []struct {
+		input       string
+		wantMatched bool
+		wantArg     string
+		wantResp    string
+	}{
+		{"!xkcd 303", true, "303", "xkcd:303"},
+		{"!xkcd303", true, "303", "xkcd:303"},
+		{"!explainxkcd 303", true, "303", "explain:303"},
+		{"!explainxkcd303", true, "303", "explain:303"},
+		{"!xkcd", true, "", "xkcd:"},
+		{"!unknown", false, "", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			handler, arg, matched := GetMsgInputHandler(tt.input)
+			if matched != tt.wantMatched {
+				t.Errorf("GetMsgInputHandler(%q) matched = %v, want %v", tt.input, matched, tt.wantMatched)
+			}
+			if arg != tt.wantArg {
+				t.Errorf("GetMsgInputHandler(%q) arg = %q, want %q", tt.input, arg, tt.wantArg)
+			}
+			if matched && handler != nil {
+				resp := handler(Request{Content: arg})
+				if resp != tt.wantResp {
+					t.Errorf("GetMsgInputHandler(%q) resp = %q, want %q", tt.input, resp, tt.wantResp)
+				}
+			}
+		})
+	}
+}
+

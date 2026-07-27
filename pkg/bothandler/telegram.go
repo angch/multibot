@@ -7,22 +7,11 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"sync"
-	"time"
 
 	"github.com/angch/multibot/pkg/engineersmy"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
-
-type mediaGroupEntry struct {
-	chatID    int64
-	replyToID int
-	caption   string
-	from      string
-	filenames []string
-	timer     *time.Timer
-}
 
 // Implements MessagePlatform
 type TelegramMessagePlatform struct {
@@ -31,23 +20,24 @@ type TelegramMessagePlatform struct {
 	KnownUsers     map[string]tgbotapi.User
 	KnownUsersLock sync.RWMutex
 	DefaultChannel string
-	mediaGroupsMu  sync.Mutex
-	mediaGroups    map[string]*mediaGroupEntry
 	// Me             *tgbotapi.User // Superflous, get it from Client.Self
 }
 
 func NewMessagePlatformFromTelegram(telegrambottoken string) (*TelegramMessagePlatform, error) {
 	bot, err := tgbotapi.NewBotAPI(telegrambottoken)
 	if err != nil {
-		log.Panic(err)
+		return nil, err
 	}
 	log.Printf("Connected to Telegram on account %s", bot.Self.UserName)
 
+	if err := os.MkdirAll("tmp", 0o755); err != nil {
+		log.Println(err)
+	}
+
 	return &TelegramMessagePlatform{
-		Client:      bot,
-		ChannelId:   map[string]string{},
-		KnownUsers:  map[string]tgbotapi.User{},
-		mediaGroups: map[string]*mediaGroupEntry{},
+		Client:     bot,
+		ChannelId:  map[string]string{},
+		KnownUsers: map[string]tgbotapi.User{},
 	}, nil
 }
 
@@ -56,7 +46,8 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 	u.Timeout = 60
 	updates, err := s.Client.GetUpdatesChan(u)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 	for update := range updates {
 		if update.Message == nil { // ignore any non-Message Updates
@@ -64,11 +55,16 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 		}
 
 		// log.Printf("[%s] %s %d %d", update.Message.From.UserName, update.Message.Text, update.Message.From.ID, update.Message.Chat.ID)
-		s.KnownUsersLock.Lock()
-		s.KnownUsers[update.Message.From.UserName] = *update.Message.From
-		s.KnownUsersLock.Unlock()
+		fromUserName := ""
+		if update.Message.From != nil {
+			fromUserName = update.Message.From.UserName
+			s.KnownUsersLock.Lock()
+			s.KnownUsers[update.Message.From.UserName] = *update.Message.From
+			s.KnownUsersLock.Unlock()
+		}
 
 		content := update.Message.Text
+		chatIDStr := fmt.Sprintf("%d", update.Message.Chat.ID)
 
 		h, ok := Handlers[content]
 		if ok {
@@ -84,8 +80,7 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 
 		// Can be better to decouple 1 to 1 of message : response
 		for _, v := range CatchallHandlers {
-			// FIXME
-			r := v(Request{content, "telegram", "", ""})
+			r := v(Request{content, "telegram", chatIDStr, fromUserName})
 			if r != "" {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, r)
 				msg.ReplyToMessageID = update.Message.MessageID
@@ -110,7 +105,7 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 				}
 				if r.Image != nil {
 					photoFileBytes := tgbotapi.FileBytes{
-						Name:  sanitizeFilename(content, ".png"),
+						Name:  sanitizeFilename(content, "png"),
 						Bytes: r.Image,
 					}
 					msg := tgbotapi.NewPhotoUpload(update.Message.Chat.ID, photoFileBytes)
@@ -124,21 +119,14 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 			}
 		}
 
-		sliced_content := strings.SplitN(content, " ", 2)
-		if len(sliced_content) > 1 {
-			command := sliced_content[0]
-			actual_content := sliced_content[1]
-
-			ih, ok := MsgInputHandlers[command]
-			if ok {
-				response := ih(Request{actual_content, "telegram", "", ""})
-				if response != "" {
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, response)
-					msg.ReplyToMessageID = update.Message.MessageID
-					_, err := s.Client.Send(msg)
-					if err != nil {
-						log.Println(err)
-					}
+		if ih, actual_content, ok := GetMsgInputHandler(content); ok {
+			response := ih(Request{actual_content, "telegram", chatIDStr, fromUserName})
+			if response != "" {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, response)
+				msg.ReplyToMessageID = update.Message.MessageID
+				_, err := s.Client.Send(msg)
+				if err != nil {
+					log.Println(err)
 				}
 			}
 		}
@@ -169,33 +157,26 @@ func (s *TelegramMessagePlatform) ProcessMessages() {
 			if caption == "" {
 				caption = m.Caption
 			}
-			chatIDStr := fmt.Sprintf("%d", m.Chat.ID)
 
-			if m.MediaGroupID != "" {
-				// Album: buffer photos until they stop arriving, then dispatch.
-				key := fmt.Sprintf("%d_%s", m.Chat.ID, m.MediaGroupID)
-				s.bufferAlbumPhoto(key, filename, caption, m.From.UserName, m.Chat.ID, m.MessageID)
-			} else {
-				// Single image: call legacy single-file handlers and list handlers.
-				req := Request{caption, "telegram", chatIDStr, m.From.UserName}
-				for _, h := range ImageHandlers {
-					r := h(filename, req)
-					if r != "" {
-						msg := tgbotapi.NewMessage(m.Chat.ID, r)
-						msg.ReplyToMessageID = m.MessageID
-						if _, err := s.Client.Send(msg); err != nil {
-							log.Println(err)
-						}
+			// Single image: call legacy single-file handlers and list handlers.
+			req := Request{caption, "telegram", chatIDStr, fromUserName}
+			for _, h := range ImageHandlers {
+				r := h(filename, req)
+				if r != "" {
+					msg := tgbotapi.NewMessage(m.Chat.ID, r)
+					msg.ReplyToMessageID = m.MessageID
+					if _, err := s.Client.Send(msg); err != nil {
+						log.Println(err)
 					}
 				}
-				for _, h := range ImageListHandlers {
-					r := h([]string{filename}, req)
-					if r != "" {
-						msg := tgbotapi.NewMessage(m.Chat.ID, r)
-						msg.ReplyToMessageID = m.MessageID
-						if _, err := s.Client.Send(msg); err != nil {
-							log.Println(err)
-						}
+			}
+			for _, h := range ImageListHandlers {
+				r := h([]string{filename}, req)
+				if r != "" {
+					msg := tgbotapi.NewMessage(m.Chat.ID, r)
+					msg.ReplyToMessageID = m.MessageID
+					if _, err := s.Client.Send(msg); err != nil {
+						log.Println(err)
 					}
 				}
 			}
@@ -217,12 +198,18 @@ func (s *TelegramMessagePlatform) botDownload(fileId string, localFilename strin
 	log.Println("Downloading", downloadUrl)
 
 	get, err := http.Get(downloadUrl)
-	if err != nil || get == nil || get.Body == nil {
+	if err != nil {
 		log.Println(err)
 		return err
 	}
+	if get == nil || get.Body == nil {
+		return fmt.Errorf("no response body from %s", downloadUrl)
+	}
 	reader := get.Body
 	defer reader.Close()
+	if get.StatusCode < 200 || get.StatusCode > 299 {
+		return fmt.Errorf("unexpected status %s from %s", get.Status, downloadUrl)
+	}
 
 	out, err := os.Create(localFilename)
 	if err != nil {
@@ -235,55 +222,6 @@ func (s *TelegramMessagePlatform) botDownload(fileId string, localFilename strin
 		return err
 	}
 	return nil
-}
-
-// bufferAlbumPhoto accumulates photos from a Telegram media group (album).
-// It resets a 800 ms timer on each arrival; when the timer fires all buffered
-// filenames are dispatched to ImageListHandlers in one call.
-func (s *TelegramMessagePlatform) bufferAlbumPhoto(key, filename, caption, from string, chatID int64, replyToID int) {
-	s.mediaGroupsMu.Lock()
-	defer s.mediaGroupsMu.Unlock()
-
-	entry, exists := s.mediaGroups[key]
-	if !exists {
-		entry = &mediaGroupEntry{
-			chatID:    chatID,
-			replyToID: replyToID,
-			from:      from,
-		}
-		s.mediaGroups[key] = entry
-	}
-	entry.filenames = append(entry.filenames, filename)
-	if caption != "" && entry.caption == "" {
-		entry.caption = caption
-	}
-
-	if entry.timer != nil {
-		entry.timer.Stop()
-	}
-	captured := entry
-	entry.timer = time.AfterFunc(800*time.Millisecond, func() {
-		s.mediaGroupsMu.Lock()
-		delete(s.mediaGroups, key)
-		s.mediaGroupsMu.Unlock()
-
-		req := Request{
-			Content:  captured.caption,
-			Platform: "telegram",
-			Channel:  fmt.Sprintf("%d", captured.chatID),
-			From:     captured.from,
-		}
-		for _, h := range ImageListHandlers {
-			r := h(captured.filenames, req)
-			if r != "" {
-				msg := tgbotapi.NewMessage(captured.chatID, r)
-				msg.ReplyToMessageID = captured.replyToID
-				if _, err := s.Client.Send(msg); err != nil {
-					log.Println(err)
-				}
-			}
-		}
-	})
 }
 
 func (s *TelegramMessagePlatform) Send(text string) {
@@ -315,24 +253,15 @@ func (s *TelegramMessagePlatform) Close() {
 }
 
 func (s *TelegramMessagePlatform) ChannelMessageSend(channel, message string) error {
-	if channel == "" {
-		channel = s.DefaultChannel
-	}
-	channelId, ok := engineersmy.KnownTelegramChannels[channel]
-	if !ok {
-		log.Println("Unknown channel", channel)
-		return fmt.Errorf("unknown channel %s", channel)
-	}
-	msg := tgbotapi.NewMessage(int64(channelId), message)
-	_, err := s.Client.Send(msg)
-	if err != nil {
-		log.Println(err)
-	}
-	return err
+	return s.channelMessageSend(channel, message, false)
 }
 
-// ChannelMessageSilentSend is FIXME: dupe of ChannelMessageSend with DisableNotification
+// ChannelMessageSilentSend is ChannelMessageSend with DisableNotification
 func (s *TelegramMessagePlatform) ChannelMessageSilentSend(channel, message string) error {
+	return s.channelMessageSend(channel, message, true)
+}
+
+func (s *TelegramMessagePlatform) channelMessageSend(channel, message string, silent bool) error {
 	if channel == "" {
 		channel = s.DefaultChannel
 	}
@@ -342,7 +271,7 @@ func (s *TelegramMessagePlatform) ChannelMessageSilentSend(channel, message stri
 		return fmt.Errorf("unknown channel %s", channel)
 	}
 	msg := tgbotapi.NewMessage(int64(channelId), message)
-	msg.DisableNotification = true
+	msg.DisableNotification = silent
 	_, err := s.Client.Send(msg)
 	if err != nil {
 		log.Println(err)

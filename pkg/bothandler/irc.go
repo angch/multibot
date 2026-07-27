@@ -2,6 +2,7 @@ package bothandler
 
 import (
 	"crypto/tls"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -54,7 +55,11 @@ func (s *IrcMessagePlatform) ProcessMessages() {
 		switch m.Command {
 		case "001":
 			// 001 is a welcome event, so we join channels there
-			err := c.Write("JOIN #" + s.DefaultChannel)
+			channel := s.DefaultChannel
+			if !strings.HasPrefix(channel, "#") {
+				channel = "#" + channel
+			}
+			err := c.Write("JOIN " + channel)
 			if err != nil {
 				log.Println(err)
 			}
@@ -97,25 +102,18 @@ func (s *IrcMessagePlatform) ProcessMessages() {
 					}
 				}
 
-				sliced_content := strings.SplitN(content, " ", 2)
-				if len(sliced_content) > 1 {
-					command := sliced_content[0]
-					actual_content := sliced_content[1]
-
-					ih, ok := MsgInputHandlers[command]
-					if ok {
-						response := ih(Request{actual_content, "IRC", "", ""})
-						if response != "" {
-							err := c.WriteMessage(&irc.Message{
-								Command: "PRIVMSG",
-								Params: []string{
-									channel,
-									response,
-								},
-							})
-							if err != nil {
-								log.Println(err)
-							}
+				if ih, actual_content, ok := GetMsgInputHandler(content); ok {
+					response := ih(Request{actual_content, "IRC", "", ""})
+					if response != "" {
+						err := c.WriteMessage(&irc.Message{
+							Command: "PRIVMSG",
+							Params: []string{
+								channel,
+								response,
+							},
+						})
+						if err != nil {
+							log.Println(err)
 						}
 					}
 				}
@@ -131,19 +129,16 @@ func (s *IrcMessagePlatform) ProcessMessages() {
 		err := client.Run()
 		if err != nil {
 			log.Println(err)
-			if s.CloseMe {
-				break
-			}
-			x := err.Error()
-			if x == "EOF" || strings.HasPrefix(x, "use of closed network connection") {
-				time.Sleep(5 * time.Second)
-				err := s.connect()
-				if err != nil {
-					// FIXME
-					break
-				}
-				continue
-			}
+		}
+		if s.CloseMe {
+			break
+		}
+		// Back off before every retry so we don't spin hot, then re-dial
+		// instead of reusing a dead connection.
+		time.Sleep(5 * time.Second)
+		if err := s.connect(); err != nil {
+			// FIXME
+			break
 		}
 	}
 }
@@ -176,6 +171,12 @@ func (s *IrcMessagePlatform) ChannelMessageSend(channelId, message string) error
 	if channelId == "" {
 		channelId = s.DefaultChannel
 	}
+	if !strings.HasPrefix(channelId, "#") {
+		channelId = "#" + channelId
+	}
+	if s.Client == nil {
+		return fmt.Errorf("irc client not connected yet")
+	}
 	err := s.Client.WriteMessage(&irc.Message{
 		Command: "PRIVMSG",
 		Params: []string{
@@ -186,5 +187,5 @@ func (s *IrcMessagePlatform) ChannelMessageSend(channelId, message string) error
 	if err != nil {
 		log.Println(err)
 	}
-	return nil
+	return err
 }

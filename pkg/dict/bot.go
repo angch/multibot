@@ -19,9 +19,11 @@ func DictHandler(r bothandler.Request) string {
 	input := r.Content
 	args := strings.Split(input, " ")
 
-	if len(args) == 0 || args[0] != "!dict" {
+	if len(args) == 0 || (args[0] != "!dict" && args[0] != "wt") {
 		return ""
 	}
+
+	wordTrip := args[0] == "wt"
 
 	if myDict == nil {
 		return ""
@@ -55,6 +57,12 @@ func DictHandler(r bothandler.Request) string {
 		}
 		if len(arg) > 0 && arg[0] == '|' {
 			sorttype = arg[1:]
+		}
+
+		if wordTrip && len(arg) > 0 {
+			lc := CountLetters(strings.ToLower(arg[1:]))
+			w = w.ContainsAll(lc)
+			sorttype = "len"
 		}
 	}
 

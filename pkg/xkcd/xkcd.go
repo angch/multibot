@@ -3,6 +3,7 @@ package xkcd
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/angch/multibot/pkg/bothandler"
 )
@@ -13,7 +14,7 @@ func init() {
 }
 
 func sanitize(input string) int {
-	n, err := strconv.Atoi(input)
+	n, err := strconv.Atoi(strings.TrimSpace(input))
 	if err != nil {
 		return -1
 	}

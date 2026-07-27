@@ -1,9 +1,11 @@
 package bothandler
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/flytam/filenamify"
 )
@@ -58,6 +60,37 @@ func RegisterMessageWithInputHandler(m string, h MessageWithInputHandler) {
 	MsgInputHandlers[m] = h
 }
 
+func GetMsgInputHandler(content string) (MessageWithInputHandler, string, bool) {
+	slicedContent := strings.SplitN(content, " ", 2)
+	command := slicedContent[0]
+	if ih, ok := MsgInputHandlers[command]; ok {
+		actualContent := ""
+		if len(slicedContent) > 1 {
+			actualContent = strings.TrimSpace(slicedContent[1])
+		}
+		return ih, actualContent, true
+	}
+
+	var bestKey string
+	var bestHandler MessageWithInputHandler
+	for key, handler := range MsgInputHandlers {
+		if strings.HasPrefix(content, key) {
+			if len(key) > len(bestKey) {
+				bestKey = key
+				bestHandler = handler
+			}
+		}
+	}
+
+	if bestKey != "" {
+		actualContent := strings.TrimPrefix(content, bestKey)
+		actualContent = strings.TrimSpace(actualContent)
+		return bestHandler, actualContent, true
+	}
+
+	return nil, "", false
+}
+
 func RegisterMessageHandler(m string, h MessageHandler) {
 	Handlers[m] = h
 }
@@ -82,7 +115,7 @@ func RegisterMessagePlatform(m MessagePlatform) {
 }
 
 func RegisterPassiveMessagePlatform(m MessagePlatform) {
-	ActiveMessagePlatforms = append(ActiveMessagePlatforms, m)
+	RegisterMessagePlatform(m)
 }
 
 func Shutdown() {
@@ -92,19 +125,51 @@ func Shutdown() {
 }
 
 func ChannelMessageSend(channelId string, message string) error {
+	var errs []error
 	for _, v := range ActiveMessagePlatforms {
 		err := v.ChannelMessageSend(channelId, message)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	return errors.Join(errs...)
+}
+
+// splitMessage splits text into rune-safe chunks of at most limit bytes,
+// preferring to break at whitespace.
+func splitMessage(text string, limit int) []string {
+	var chunks []string
+	for len(text) > 0 {
+		if len(text) <= limit {
+			chunks = append(chunks, text)
+			break
+		}
+		cut := limit
+		// Don't split in the middle of a UTF-8 rune.
+		for cut > 0 && !utf8.RuneStart(text[cut]) {
+			cut--
+		}
+		chunk := text[:cut]
+		rest := text[cut:]
+		if spaceIndex := strings.LastIndex(chunk, " "); spaceIndex > 0 {
+			rest = text[spaceIndex+1:]
+			chunk = text[:spaceIndex]
+		}
+		chunks = append(chunks, chunk)
+		text = rest
+	}
+	return chunks
 }
 
 func sanitizeFilename(f string, extension string) string {
 	f = strings.ReplaceAll(f, " ", "_")
 	if len(f) > 94 {
-		f = f[:94]
+		cut := 94
+		// Don't split in the middle of a UTF-8 rune.
+		for cut > 0 && !utf8.RuneStart(f[cut]) {
+			cut--
+		}
+		f = f[:cut]
 	}
 	filename := fmt.Sprintf("%s.%s", f, extension)
 	filename, err := filenamify.Filenamify(filename, filenamify.Options{Replacement: "_"})

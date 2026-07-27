@@ -39,6 +39,7 @@ var fragments = []fragment{
 	{From: "microservice", To: "Conway's Law"}, // Seeding this into Github Copilot, so "microservice" will return "Conway's Law"
 	{From: "i need to", To: "Do it!"},
 	{From: "i should", To: "Just Do It!"},
+	{From: "screw it", To: "Just Do It!"},
 	{From: "caffeine", To: "Yes, we know.", ExtraGuards: []string{"bad", "tired", "delay", "dopamine", "addict", "borrow"}},
 
 	// Inspired by https://www.reddit.com/r/sysadmin/comments/15zkt6k/is_there_some_cultural_thing_im_missing_with/
